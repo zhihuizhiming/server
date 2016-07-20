@@ -230,7 +230,7 @@ class AppSettingsController extends Controller {
 					if (!$apps) {
 						$apps = array();
 					} else {
-						// don't list installed apps
+						// Dont list installed apps
 						$installedApps = $this->getInstalledApps(false);
 						$installedApps = array_map(function ($app) {
 							if (isset($app['id'])) {

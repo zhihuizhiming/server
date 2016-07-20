@@ -569,7 +569,9 @@ class Server extends ServerContainer implements IServerContainer {
 			return new OCSClient(
 				$this->getHTTPClientService(),
 				$this->getConfig(),
-				$this->getLogger()
+				$this->getLogger(),
+				$this->getRootFolder(),
+				new TimeFactory()
 			);
 		});
 		$this->registerService('LockingProvider', function (Server $c) {

@@ -42,6 +42,7 @@ namespace OC;
 use OC\App\CodeChecker\CodeChecker;
 use OC\App\CodeChecker\EmptyCheck;
 use OC\App\CodeChecker\PrivateCheck;
+use OC\AppFramework\Utility\TimeFactory;
 use OC_App;
 use OC_DB;
 use OC_Helper;
@@ -244,7 +245,9 @@ class Installer {
 		$ocsClient = new OCSClient(
 			\OC::$server->getHTTPClientService(),
 			\OC::$server->getConfig(),
-			\OC::$server->getLogger()
+			\OC::$server->getLogger(),
+			\OC::$server->getRootFolder(),
+			new TimeFactory()
 		);
 		$appData = $ocsClient->getApplication($ocsId, \OCP\Util::getVersion());
 		$downloadLink = $ocsClient->getApplicationDownload($ocsId);

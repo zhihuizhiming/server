@@ -33,6 +33,10 @@
 
 namespace OC;
 
+use OC\Files\Node\File;
+use OCP\AppFramework\Utility\ITimeFactory;
+use OCP\Files\Folder;
+use OCP\Files\IRootFolder;
 use OCP\Http\Client\IClientService;
 use OCP\IConfig;
 use OCP\ILogger;
@@ -49,18 +53,28 @@ class OCSClient {
 	private $config;
 	/** @var ILogger */
 	private $logger;
+	/** @var IRootFolder */
+	private $rootFolder;
+	/** @var ITimeFactory */
+	private $timeFactory;
 
 	/**
 	 * @param IClientService $httpClientService
 	 * @param IConfig $config
 	 * @param ILogger $logger
+	 * @param IRootFolder $rootFolder
+	 * @param ITimeFactory $timeFactory
 	 */
 	public function __construct(IClientService $httpClientService,
 								IConfig $config,
-								ILogger $logger) {
+								ILogger $logger,
+								IRootFolder $rootFolder,
+								ITimeFactory $timeFactory) {
 		$this->httpClientService = $httpClientService;
 		$this->config = $config;
 		$this->logger = $logger;
+		$this->rootFolder = $rootFolder;
+		$this->timeFactory = $timeFactory;
 	}
 
 	/**
@@ -99,6 +113,20 @@ class OCSClient {
 			return null;
 		}
 
+		$categoryCacheFile = 'appstore_categories_cache.json';
+		/** @var \OCP\Files\IRootFolder $rootFolder */
+		$rootFolder = $this->rootFolder->get('/');
+		try {
+			/** @var \OCP\Files\File $categoryCache */
+			$categoryCache = $rootFolder->get($categoryCacheFile);
+			$timeStamp = (int)$this->config->getAppValue('core', $categoryCacheFile, 0);
+			if($timeStamp > 0 && $this->timeFactory->getTime() > $timeStamp + 300) {
+				return json_decode($categoryCache->getContent(), true);
+			}
+		} catch (\OCP\Files\NotFoundException $e) {
+			$categoryCache = $rootFolder->newFile($categoryCacheFile);
+		}
+
 		$client = $this->httpClientService->newClient();
 		try {
 			$response = $client->get(
@@ -126,15 +154,19 @@ class OCSClient {
 
 		foreach ($categories as $category) {
 			$id = (string)$category['id'];
-			// FIXME: Add helper to detect used languages and use used language
 			$name = (string)$category['translations']['en']['name'];
 			$cats[$id] = $name;
 		}
+
+		$categoryCache->putContent(json_encode($categories));
+		$this->config->setAppValue('core', $categoryCacheFile, $this->timeFactory->getTime());
 
 		return $cats;
 	}
 
 	/**
+	 * Gets the applications from the appstore
+	 *
 	 * @return array
 	 */
 	private function getApps() {
@@ -149,7 +181,7 @@ class OCSClient {
 			);
 		} catch(\Exception $e) {
 			$this->logger->error(
-				sprintf('Could not get categories: %s', $e->getMessage()),
+				sprintf('Could not get apps: %s', $e->getMessage()),
 				[
 					'app' => 'core',
 				]
@@ -166,13 +198,11 @@ class OCSClient {
 		foreach($apps as $appToRead) {
 			$app = [];
 			$app['id'] = (string)$appToRead['id'];
-			// FIXME: Add helper to detect language
 			$app['name'] = (string)$appToRead['translations']['en']['name'];
 			$app['version'] = (string)$appToRead['releases'][0]['version'];
 			$app['checksum'] = (string)$appToRead['releases'][0]['checksum'];
 			$app['download'] = (string)$appToRead['releases'][0]['download'];
 			$app['preview'] = (string)$appToRead['screenshots'][0]['url'];
-			// FIXME: Add helper to detect language
 			$app['description'] = (string)$appToRead['translations']['en']['description'];
 			$app['featured'] = (bool)$appToRead['featured'];
 			$app['documentation']['user'] = (string)$appToRead['userDocs'];
