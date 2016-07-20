@@ -98,28 +98,6 @@ class AppSettingsControllerTest extends TestCase {
 		);
 	}
 
-	public function testChangeExperimentalConfigStateTrue() {
-		$this->config
-			->expects($this->once())
-			->method('setSystemValue')
-			->with('appstore.experimental.enabled', true);
-		$this->appManager
-			->expects($this->once())
-			->method('clearAppsCache');
-		$this->assertEquals(new DataResponse(), $this->appSettingsController->changeExperimentalConfigState(true));
-	}
-
-	public function testChangeExperimentalConfigStateFalse() {
-		$this->config
-			->expects($this->once())
-			->method('setSystemValue')
-			->with('appstore.experimental.enabled', false);
-		$this->appManager
-			->expects($this->once())
-			->method('clearAppsCache');
-		$this->assertEquals(new DataResponse(), $this->appSettingsController->changeExperimentalConfigState(false));
-	}
-
 	public function testListCategoriesCached() {
 		$this->cache
 			->expects($this->exactly(2))

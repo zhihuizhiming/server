@@ -43,8 +43,8 @@ use OCP\IConfig;
  * @package OC\Settings\Controller
  */
 class AppSettingsController extends Controller {
-	const CAT_ENABLED = 0;
-	const CAT_DISABLED = 1;
+	const CAT_ENABLED = 'enabled';
+	const CAT_DISABLED = 'disabled';
 
 	/** @var \OCP\IL10N */
 	private $l10n;
@@ -87,35 +87,24 @@ class AppSettingsController extends Controller {
 	}
 
 	/**
-	 * Enables or disables the display of experimental apps
-	 * @param bool $state
-	 * @return DataResponse
-	 */
-	public function changeExperimentalConfigState($state) {
-		$this->config->setSystemValue('appstore.experimental.enabled', $state);
-		$this->appManager->clearAppsCache();
-		return new DataResponse();
-	}
-
-	/**
 	 * @param string|int $category
-	 * @return int
+	 * @return string
 	 */
 	protected function getCategory($category) {
 		if (is_string($category)) {
 			foreach ($this->listCategories() as $cat) {
 				if (isset($cat['ident']) && $cat['ident'] === $category) {
-					$category = (int) $cat['id'];
+					$category = $cat['id'];
 					break;
 				}
 			}
 
 			// Didn't find the category, falling back to enabled
-			if (is_string($category)) {
+			if ($category === '') {
 				$category = self::CAT_ENABLED;
 			}
 		}
-		return (int) $category;
+		return $category;
 	}
 
 	/**
@@ -131,14 +120,13 @@ class AppSettingsController extends Controller {
 		}
 
 		$params = [];
-		$params['experimentalEnabled'] = $this->config->getSystemValue('appstore.experimental.enabled', false);
 		$params['category'] = $category;
 		$params['appstoreEnabled'] = $this->config->getSystemValue('appstoreenabled', true) === true;
 		$this->navigationManager->setActiveEntry('core_apps');
 
 		$templateResponse = new TemplateResponse($this->appName, 'apps', $params, 'user');
 		$policy = new ContentSecurityPolicy();
-		$policy->addAllowedImageDomain('https://apps.owncloud.com');
+		$policy->addAllowedImageDomain('*');
 		$templateResponse->setContentSecurityPolicy($policy);
 
 		return $templateResponse;
@@ -160,15 +148,15 @@ class AppSettingsController extends Controller {
 
 		if($this->ocsClient->isAppStoreEnabled()) {
 			// apps from external repo via OCS
-			$ocs = $this->ocsClient->getCategories(\OCP\Util::getVersion());
+			$ocs = $this->ocsClient->getCategories();
 			if ($ocs) {
 				foreach($ocs as $k => $v) {
-					$name = str_replace('ownCloud ', '', $v);
-					$ident = str_replace(' ', '-', urlencode(strtolower($name)));
+					$ident = str_replace('&', '-', strtolower($v));
+					$ident = str_replace(' ', '-', urlencode($ident));
 					$categories[] = [
 						'id' => $k,
 						'ident' => $ident,
-						'displayName' => $name,
+						'displayName' => $v,
 					];
 				}
 			}
@@ -196,7 +184,7 @@ class AppSettingsController extends Controller {
 		} else {
 			switch ($category) {
 				// installed apps
-				case 0:
+				case self::CAT_ENABLED:
 					$apps = $this->getInstalledApps($includeUpdateInfo);
 					usort($apps, function ($a, $b) {
 						$a = (string)$a['name'];
@@ -206,31 +194,26 @@ class AppSettingsController extends Controller {
 						}
 						return ($a < $b) ? -1 : 1;
 					});
-					$version = \OCP\Util::getVersion();
-					foreach($apps as $key => $app) {
-						if(!array_key_exists('level', $app) && array_key_exists('ocsid', $app)) {
-							$remoteAppEntry = $this->ocsClient->getApplication($app['ocsid'], $version);
 
-							if(is_array($remoteAppEntry) && array_key_exists('level', $remoteAppEntry)) {
-								$apps[$key]['level'] = $remoteAppEntry['level'];
-							}
+					foreach($apps as $key => $app) {
+						$remoteAppEntry = $this->ocsClient->getApplication($app['id']);
+
+						if(is_array($remoteAppEntry)) {
+							$apps[$key] = array_merge($app, $remoteAppEntry);
 						}
 					}
 					break;
-				// not-installed apps
-				case 1:
+				// disabled apps
+				case self::CAT_DISABLED:
 					$apps = \OC_App::listAllApps(true, $includeUpdateInfo, $this->ocsClient);
 					$apps = array_filter($apps, function ($app) {
 						return !$app['active'];
 					});
-					$version = \OCP\Util::getVersion();
 					foreach($apps as $key => $app) {
-						if(!array_key_exists('level', $app) && array_key_exists('ocsid', $app)) {
-							$remoteAppEntry = $this->ocsClient->getApplication($app['ocsid'], $version);
+						$remoteAppEntry = $this->ocsClient->getApplication($app['id']);
 
-							if(is_array($remoteAppEntry) && array_key_exists('level', $remoteAppEntry)) {
-								$apps[$key]['level'] = $remoteAppEntry['level'];
-							}
+						if(is_array($remoteAppEntry)) {
+							$apps[$key] = array_merge($app, $remoteAppEntry);
 						}
 					}
 					usort($apps, function ($a, $b) {
@@ -243,17 +226,15 @@ class AppSettingsController extends Controller {
 					});
 					break;
 				default:
-					$filter = $this->config->getSystemValue('appstore.experimental.enabled', false) ? 'all' : 'approved';
-
-					$apps = \OC_App::getAppstoreApps($filter, $category, $this->ocsClient);
+					$apps = \OC_App::getAppstoreApps($category, $this->ocsClient);
 					if (!$apps) {
 						$apps = array();
 					} else {
 						// don't list installed apps
 						$installedApps = $this->getInstalledApps(false);
 						$installedApps = array_map(function ($app) {
-							if (isset($app['ocsid'])) {
-								return $app['ocsid'];
+							if (isset($app['id'])) {
+								return $app['id'];
 							}
 							return $app['id'];
 						}, $installedApps);
@@ -337,9 +318,6 @@ class AppSettingsController extends Controller {
 			return !$app['active'];
 		});
 		$inactiveApps = array_map(function($app) {
-			if (isset($app['ocsid'])) {
-				return $app['ocsid'];
-			}
 			return $app['id'];
 		}, $inactiveApps);
 		return $inactiveApps;

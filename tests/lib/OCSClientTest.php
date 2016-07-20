@@ -87,7 +87,7 @@ class OCSClientTest extends \Test\TestCase {
 			->method('getSystemValue')
 			->with('appstoreenabled', true)
 			->will($this->returnValue(false));
-		$this->assertNull($this->ocsClient->getCategories([8, 1, 0, 7]));
+		$this->assertNull($this->ocsClient->getCategories());
 	}
 
 	public function testGetCategoriesExceptionClient() {
@@ -130,7 +130,7 @@ class OCSClientTest extends \Test\TestCase {
 				]
 			);
 
-		$this->assertNull($this->ocsClient->getCategories([8, 1, 0, 7]));
+		$this->assertNull($this->ocsClient->getCategories());
 	}
 
 	public function testGetCategoriesParseError() {
@@ -179,7 +179,7 @@ class OCSClientTest extends \Test\TestCase {
 				]
 			);
 
-		$this->assertNull($this->ocsClient->getCategories([8, 1, 0, 7]));
+		$this->assertNull($this->ocsClient->getCategories());
 	}
 
 	public function testGetCategoriesSuccessful() {
@@ -261,7 +261,7 @@ class OCSClientTest extends \Test\TestCase {
 			924 => 'ownCloud Tool',
 			925 => 'ownCloud other',
 		];
-		$this->assertSame($expected, $this->ocsClient->getCategories([8, 1, 0, 7]));
+		$this->assertSame($expected, $this->ocsClient->getCategories());
 	}
 
 	public function testGetApplicationsDisabledAppStore() {

@@ -247,13 +247,13 @@ class Installer {
 			\OC::$server->getLogger()
 		);
 		$appData = $ocsClient->getApplication($ocsId, \OCP\Util::getVersion());
-		$download = $ocsClient->getApplicationDownload($ocsId, \OCP\Util::getVersion());
+		$downloadLink = $ocsClient->getApplicationDownload($ocsId);
 
-		if (isset($download['downloadlink']) && trim($download['downloadlink']) !== '') {
-			$download['downloadlink'] = str_replace(' ', '%20', $download['downloadlink']);
+		if ($downloadLink !== '') {
+			$downloadLink = str_replace(' ', '%20', $downloadLink);
 			$info = array(
 				'source' => 'http',
-				'href' => $download['downloadlink'],
+				'href' => $downloadLink,
 				'appdata' => $appData
 			);
 		} else {

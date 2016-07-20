@@ -84,42 +84,17 @@ class OCSClient {
 	 * @return string of the AppStore server
 	 */
 	private function getAppStoreUrl() {
-		return $this->config->getSystemValue('appstoreurl', 'https://api.owncloud.com/v1');
-	}
-
-	/**
-	 * @param string $body
-	 * @param string $action
-	 * @return null|\SimpleXMLElement
-	 */
-	private function loadData($body, $action) {
-		$loadEntities = libxml_disable_entity_loader(true);
-		$data = @simplexml_load_string($body);
-		libxml_disable_entity_loader($loadEntities);
-
-		if($data === false) {
-			libxml_clear_errors();
-			$this->logger->error(
-				sprintf('Could not get %s, content was no valid XML', $action),
-				[
-					'app' => 'core',
-				]
-			);
-			return null;
-		}
-
-		return $data;
+		return $this->config->getSystemValue('appstoreurl', 'https://apps.weasel.rocks');
 	}
 
 	/**
 	 * Get all the categories from the OCS server
 	 *
-	 * @param array $targetVersion The target ownCloud version
 	 * @return array|null an array of category ids or null
 	 * @note returns NULL if config value appstoreenabled is set to false
 	 * This function returns a list of all the application categories on the OCS server
 	 */
-	public function getCategories(array $targetVersion) {
+	public function getCategories() {
 		if (!$this->isAppStoreEnabled()) {
 			return null;
 		}
@@ -127,12 +102,9 @@ class OCSClient {
 		$client = $this->httpClientService->newClient();
 		try {
 			$response = $client->get(
-				$this->getAppStoreUrl() . '/content/categories',
+				$this->getAppStoreUrl() . '/api/v1/categories.json',
 				[
 					'timeout' => 20,
-					'query' => [
-						'version' => implode('x', $targetVersion),
-					],
 				]
 			);
 		} catch(\Exception $e) {
@@ -145,17 +117,17 @@ class OCSClient {
 			return null;
 		}
 
-		$data = $this->loadData($response->getBody(), 'categories');
-		if($data === null) {
+		$categories = json_decode($response->getBody(), true);
+		if(!is_array($categories)) {
 			return null;
 		}
 
-		$tmp = $data->data;
 		$cats = [];
 
-		foreach ($tmp->category as $value) {
-			$id = (int)$value->id;
-			$name = (string)$value->name;
+		foreach ($categories as $category) {
+			$id = (string)$category['id'];
+			// FIXME: Add helper to detect used languages and use used language
+			$name = (string)$category['translations']['en']['name'];
 			$cats[$id] = $name;
 		}
 
@@ -163,38 +135,21 @@ class OCSClient {
 	}
 
 	/**
-	 * Get all the applications from the OCS server
-	 * @param array $categories
-	 * @param int $page
-	 * @param string $filter
-	 * @param array $targetVersion The target ownCloud version
-	 * @return array An array of application data
+	 * @return array
 	 */
-	public function getApplications(array $categories, $page, $filter, array $targetVersion) {
-		if (!$this->isAppStoreEnabled()) {
-			return [];
-		}
-
+	private function getApps() {
 		$client = $this->httpClientService->newClient();
+
 		try {
 			$response = $client->get(
-				$this->getAppStoreUrl() . '/content/data',
+				$this->getAppStoreUrl() . '/api/v1/platform/9.0.0/apps.json',
 				[
 					'timeout' => 20,
-					'query' => [
-						'version' => implode('x', $targetVersion),
-						'filter' => $filter,
-						'categories' => implode('x', $categories),
-						'sortmode' => 'new',
-						'page' => $page,
-						'pagesize' => 100,
-						'approved' => $filter
-					],
 				]
 			);
 		} catch(\Exception $e) {
 			$this->logger->error(
-				sprintf('Could not get applications: %s', $e->getMessage()),
+				sprintf('Could not get categories: %s', $e->getMessage()),
 				[
 					'app' => 'core',
 				]
@@ -202,39 +157,50 @@ class OCSClient {
 			return [];
 		}
 
-		$data = $this->loadData($response->getBody(), 'applications');
-		if($data === null) {
+		$apps = json_decode($response->getBody(), true);
+		if(!is_array($apps)) {
 			return [];
 		}
 
-		$tmp = $data->data->content;
-		$tmpCount = count($tmp);
-
-		$apps = [];
-		for ($i = 0; $i < $tmpCount; $i++) {
+		$sortedApps = [];
+		foreach($apps as $appToRead) {
 			$app = [];
-			$app['id'] = (string)$tmp[$i]->id;
-			$app['name'] = (string)$tmp[$i]->name;
-			$app['label'] = (string)$tmp[$i]->label;
-			$app['version'] = (string)$tmp[$i]->version;
-			$app['type'] = (string)$tmp[$i]->typeid;
-			$app['typename'] = (string)$tmp[$i]->typename;
-			$app['personid'] = (string)$tmp[$i]->personid;
-			$app['profilepage'] = (string)$tmp[$i]->profilepage;
-			$app['license'] = (string)$tmp[$i]->license;
-			$app['detailpage'] = (string)$tmp[$i]->detailpage;
-			$app['preview'] = (string)$tmp[$i]->smallpreviewpic1;
-			$app['preview-full'] = (string)$tmp[$i]->previewpic1;
-			$app['changed'] = strtotime($tmp[$i]->changed);
-			$app['description'] = (string)$tmp[$i]->description;
-			$app['score'] = (string)$tmp[$i]->score;
-			$app['downloads'] = (int)$tmp[$i]->downloads;
-			$app['level'] = (int)$tmp[$i]->approved;
+			$app['id'] = (string)$appToRead['id'];
+			// FIXME: Add helper to detect language
+			$app['name'] = (string)$appToRead['translations']['en']['name'];
+			$app['version'] = (string)$appToRead['releases'][0]['version'];
+			$app['checksum'] = (string)$appToRead['releases'][0]['checksum'];
+			$app['download'] = (string)$appToRead['releases'][0]['download'];
+			$app['preview'] = (string)$appToRead['screenshots'][0]['url'];
+			// FIXME: Add helper to detect language
+			$app['description'] = (string)$appToRead['translations']['en']['description'];
+			$app['featured'] = (bool)$appToRead['featured'];
+			$app['documentation']['user'] = (string)$appToRead['userDocs'];
+			$app['documentation']['admin'] = (string)$appToRead['adminDocs'];
+			$app['documentation']['developer'] = (string)$appToRead['developerDocs'];
+			$app['website'] = (string)$appToRead['website'];
+			$app['bugs'] = (string)$appToRead['issueTracker'];
+			$app['detailpage'] = $this->getAppStoreUrl() . '/app/' . $app['id'];
 
-			$apps[] = $app;
+			foreach($appToRead['categories'] as $key => $category) {
+				$sortedApps[$category][] = $app;
+			}
 		}
 
-		return $apps;
+		return $sortedApps;
+	}
+
+	/**
+	 * Get all the applications from the OCS server
+	 * @param string $category
+	 * @return array An array of application data
+	 */
+	public function getApplications($category) {
+		if (!$this->isAppStoreEnabled()) {
+			return [];
+		}
+
+		return $this->getApps()[$category];
 	}
 
 
@@ -242,115 +208,45 @@ class OCSClient {
 	 * Get an the applications from the OCS server
 	 *
 	 * @param string $id
-	 * @param array $targetVersion The target ownCloud version
 	 * @return array|null an array of application data or null
 	 *
 	 * This function returns an applications from the OCS server
 	 */
-	public function getApplication($id, array $targetVersion) {
+	public function getApplication($id) {
 		if (!$this->isAppStoreEnabled()) {
 			return null;
 		}
 
-		$client = $this->httpClientService->newClient();
-		try {
-			$response = $client->get(
-				$this->getAppStoreUrl() . '/content/data/' . urlencode($id),
-				[
-					'timeout' => 20,
-					'query' => [
-						'version' => implode('x', $targetVersion),
-					],
-				]
-			);
-		} catch(\Exception $e) {
-			$this->logger->error(
-				sprintf('Could not get application: %s', $e->getMessage()),
-				[
-					'app' => 'core',
-				]
-			);
-			return null;
+		$appsInCategories = $this->getApps();
+		$requestedApp = null;
+		foreach($appsInCategories as $category) {
+			foreach($category as $app) {
+				if ($app['id'] === $id) {
+					$requestedApp = $app;
+					break;
+				}
+			}
 		}
 
-		$data = $this->loadData($response->getBody(), 'application');
-		if($data === null) {
-			return null;
-		}
-
-		$tmp = $data->data->content;
-		if (is_null($tmp)) {
-			\OCP\Util::writeLog('core', 'No update found at the ownCloud appstore for app ' . $id, \OCP\Util::DEBUG);
-			return null;
-		}
-
-		$app = [];
-		$app['id'] = (int)$id;
-		$app['name'] = (string)$tmp->name;
-		$app['version'] = (string)$tmp->version;
-		$app['type'] = (string)$tmp->typeid;
-		$app['label'] = (string)$tmp->label;
-		$app['typename'] = (string)$tmp->typename;
-		$app['personid'] = (string)$tmp->personid;
-		$app['profilepage'] = (string)$tmp->profilepage;
-		$app['detailpage'] = (string)$tmp->detailpage;
-		$app['preview1'] = (string)$tmp->smallpreviewpic1;
-		$app['preview2'] = (string)$tmp->smallpreviewpic2;
-		$app['preview3'] = (string)$tmp->smallpreviewpic3;
-		$app['changed'] = strtotime($tmp->changed);
-		$app['description'] = (string)$tmp->description;
-		$app['detailpage'] = (string)$tmp->detailpage;
-		$app['score'] = (int)$tmp->score;
-		$app['level'] = (int)$tmp->approved;
-
-		return $app;
+		return $requestedApp;
 	}
 
 	/**
 	 * Get the download url for an application from the OCS server
 	 * @param string $id
-	 * @param array $targetVersion The target ownCloud version
-	 * @return array|null an array of application data or null
+	 * @return string Download link
 	 */
-	public function getApplicationDownload($id, array $targetVersion) {
+	public function getApplicationDownload($id) {
 		if (!$this->isAppStoreEnabled()) {
 			return null;
 		}
-		$url = $this->getAppStoreUrl() . '/content/download/' . urlencode($id) . '/1';
-		$client = $this->httpClientService->newClient();
-		try {
-			$response = $client->get(
-				$url,
-				[
-					'timeout' => 20,
-					'query' => [
-						'version' => implode('x', $targetVersion),
-					],
-				]
-			);
-		} catch(\Exception $e) {
-			$this->logger->error(
-				sprintf('Could not get application download URL: %s', $e->getMessage()),
-				[
-					'app' => 'core',
-				]
-			);
-			return null;
+
+		$app = $this->getApplication($id);
+		if(isset($app['download'])) {
+			return $app['download'];
 		}
 
-		$data = $this->loadData($response->getBody(), 'application download URL');
-		if($data === null) {
-			return null;
-		}
-
-		$tmp = $data->data->content;
-		$app = [];
-		if (isset($tmp->downloadlink)) {
-			$app['downloadlink'] = (string)$tmp->downloadlink;
-		} else {
-			$app['downloadlink'] = '';
-		}
-		return $app;
+		return '';
 	}
 
 }

@@ -355,12 +355,16 @@ class OC_App {
 			\OC::$server->getConfig(),
 			\OC::$server->getLogger()
 		);
-		$appData = $ocsClient->getApplication($app, \OCP\Util::getVersion());
-		$download = $ocsClient->getApplicationDownload($app, \OCP\Util::getVersion());
-		if(isset($download['downloadlink']) and $download['downloadlink']!='') {
+		$appData = $ocsClient->getApplication($app);
+		$downloadLink  = $ocsClient->getApplicationDownload($app);
+		if($downloadLink !== '') {
 			// Replace spaces in download link without encoding entire URL
-			$download['downloadlink'] = str_replace(' ', '%20', $download['downloadlink']);
-			$info = array('source' => 'http', 'href' => $download['downloadlink'], 'appdata' => $appData);
+			$downloadLink = str_replace(' ', '%20', $downloadLink);
+			$info = [
+				'source' => 'http',
+				'href' => $downloadLink,
+				'appdata' => $appData,
+			];
 			$app = Installer::installApp($info);
 		}
 		return $app;
@@ -883,7 +887,7 @@ class OC_App {
 		if ($onlyLocal) {
 			$remoteApps = [];
 		} else {
-			$remoteApps = OC_App::getAppstoreApps('approved', null, $ocsClient);
+			$remoteApps = OC_App::getAppstoreApps(null, $ocsClient);
 		}
 		if ($remoteApps) {
 			// Remove duplicates
@@ -928,13 +932,11 @@ class OC_App {
 	 * @return array|bool  multi-dimensional array of apps.
 	 *                     Keys: id, name, type, typename, personid, license, detailpage, preview, changed, description
 	 */
-	public static function getAppstoreApps($filter = 'approved',
-										   $category = null,
+	public static function getAppstoreApps($category = null,
 										   OCSClient $ocsClient) {
-		$categories = [$category];
 
 		if (is_null($category)) {
-			$categoryNames = $ocsClient->getCategories(\OCP\Util::getVersion());
+			$categoryNames = $ocsClient->getCategories();
 			if (is_array($categoryNames)) {
 				// Check that categories of apps were retrieved correctly
 				if (!$categories = array_keys($categoryNames)) {
@@ -946,7 +948,7 @@ class OC_App {
 		}
 
 		$page = 0;
-		$remoteApps = $ocsClient->getApplications($categories, $page, $filter, \OCP\Util::getVersion());
+		$remoteApps = $ocsClient->getApplications($category);
 		$apps = [];
 		$i = 0;
 		$l = \OC::$server->getL10N('core');

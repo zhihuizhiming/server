@@ -10,13 +10,9 @@ Handlebars.registerHelper('score', function() {
 	return new Handlebars.SafeString('');
 });
 Handlebars.registerHelper('level', function() {
-	if(typeof this.level !== 'undefined') {
-		if(this.level === 200) {
+	if(typeof this.featured !== 'undefined') {
+		if(this.featured === true) {
 			return new Handlebars.SafeString('<span class="official icon-checkmark">' + t('settings', 'Official') + '</span>');
-		} else if(this.level === 100) {
-			return new Handlebars.SafeString('<span class="approved">' + t('settings', 'Approved') + '</span>');
-		} else {
-			return new Handlebars.SafeString('<span class="experimental">' + t('settings', 'Experimental') + '</span>');
 		}
 	}
 });
@@ -105,14 +101,8 @@ OC.Settings.Apps = OC.Settings.Apps || {
 						return levelDiff;
 					});
 
-					var firstExperimental = false;
 					_.each(appList, function(app) {
-						if(app.level === 0 && firstExperimental === false) {
-							firstExperimental = true;
-							OC.Settings.Apps.renderApp(app, template, null, true);
-						} else {
-							OC.Settings.Apps.renderApp(app, template, null, false);
-						}
+						OC.Settings.Apps.renderApp(app, template, null, false);
 					});
 				} else {
 					$('#apps-list').addClass('hidden');
