@@ -647,6 +647,7 @@ return array(
     'OC\\Repair\\SharePropagation' => $baseDir . '/lib/private/Repair/SharePropagation.php',
     'OC\\Repair\\SqliteAutoincrement' => $baseDir . '/lib/private/Repair/SqliteAutoincrement.php',
     'OC\\Repair\\UpdateCertificateStore' => $baseDir . '/lib/private/Repair/UpdateCertificateStore.php',
+    'OC\\Repair\\UpdateFinishLanguageCode' => $baseDir . '/lib/private/Repair/UpdateFinishLanguageCode.php',
     'OC\\Repair\\UpdateOutdatedOcsIds' => $baseDir . '/lib/private/Repair/UpdateOutdatedOcsIds.php',
     'OC\\Route\\CachingRouter' => $baseDir . '/lib/private/Route/CachingRouter.php',
     'OC\\Route\\Route' => $baseDir . '/lib/private/Route/Route.php',
