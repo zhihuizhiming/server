@@ -47,6 +47,7 @@ use OC\Repair\InnoDB;
 use OC\Repair\RepairLegacyStorages;
 use OC\Repair\RepairMimeTypes;
 use OC\Repair\SearchLuceneTables;
+use OC\Repair\UpdateFinishLanguageCode;
 use OC\Repair\UpdateOutdatedOcsIds;
 use OC\Repair\RepairInvalidShares;
 use OC\Repair\RepairUnmergedShares;
@@ -147,6 +148,7 @@ class Repair implements IOutput{
 				\OC::$server->getUserManager(),
 				\OC::$server->getGroupManager()
 			),
+			new UpdateFinishLanguageCode(\OC::$server->getDatabaseConnection()),
 		];
 	}
 
