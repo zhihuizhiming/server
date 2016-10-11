@@ -556,7 +556,8 @@ class UsersController extends Controller {
 					'data' => array(
 						'message' => (string)$this->l10n->t('Error while disabling user.')
 					)
-				)
+				),
+				Http::STATUS_FORBIDDEN
 			);
 		}
 	}
@@ -613,7 +614,8 @@ class UsersController extends Controller {
 					'data' => array(
 						'message' => (string)$this->l10n->t('Error while enabling user.')
 					)
-				)
+				),
+				Http::STATUS_FORBIDDEN
 			);
 		}
 	}
