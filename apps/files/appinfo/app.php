@@ -80,3 +80,5 @@ $templateManager->registerTemplate('application/vnd.oasis.opendocument.spreadshe
 		\OC::$server->getConfig()
 	);
 });
+
+\OCP\Util::connectHook('OC_User', 'post_login', '\OCA\Files\LoginHook', 'afterLoginHook');
