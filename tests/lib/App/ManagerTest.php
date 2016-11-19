@@ -317,6 +317,7 @@ class ManagerTest extends TestCase {
 		$this->appConfig->setValue('test2', 'enabled', 'no');
 		$this->appConfig->setValue('test3', 'enabled', '["foo"]');
 		$apps = [
+			'bruteforcesettings',
 			'dav',
 			'federatedfilesharing',
 			'files',
@@ -342,6 +343,7 @@ class ManagerTest extends TestCase {
 		$this->appConfig->setValue('test3', 'enabled', '["foo"]');
 		$this->appConfig->setValue('test4', 'enabled', '["asd"]');
 		$enabled = [
+			'bruteforcesettings',
 			'dav',
 			'federatedfilesharing',
 			'files',
