@@ -83,10 +83,11 @@
 	.header-appname-container {
 		display: inline-block;
 		position: absolute;
-		left: 70px;
+		left: 255px;
 		height: 27px;
 		padding-top: 18px;
 		padding-right: 10px;
+		display: none; /* FIXME: get rid of div */
 	}
 }
 
@@ -131,7 +132,7 @@
 	font-size: 16px;
 	font-weight: 300;
 	margin: 0;
-	margin-top: -24px;
+	margin-top: -26px;
 	padding: 7px 0 7px 5px;
 	vertical-align: middle;
 }
@@ -183,8 +184,8 @@
 		pointer-events: none;
 		border-color: rgba(0, 0, 0, 0);
 		border-bottom-color: rgba(255, 255, 255, 0.97);
-		border-width: 10px;
-		margin-left: -10px;
+		border-width: 9px;
+		margin-left: -9px;
 	}
 }
 
@@ -207,7 +208,7 @@
 /* position of dropdown arrow */
 
 #navigation:after {
-	left: 47%;
+	left: 214px;
 }
 
 #expanddiv:after {
@@ -420,4 +421,107 @@
 	#expand {
 		display: block;
 	}
+}
+
+#appmenu {
+	margin-left: 70px;
+	display: inline-block;
+	width: auto;
+	clear: both;
+}
+
+#appmenu ul {
+}
+
+#appmenu li {
+	float: left;
+	display: inline-block;
+	vertical-align: top !important;
+    height:44px;
+}
+
+#appmenu li a {
+	opacity: 0.6;
+	margin: 0;
+	padding: 12px 0px;
+	position: static;
+	text-align: center;
+	color: #1d2d44 !important;
+	vertical-align: top !important;
+    position: relative;
+
+}
+
+#appmenu li:hover a,
+#appmenu li a.active {
+	opacity: 1;
+}
+
+#appmenu li img,
+#appmenu .icon-more-white {
+	display: inline-block;
+	width: 20px;
+	height: 20px;
+	margin: 12px;
+}
+
+#appmenu li span {
+	display: none;
+	position: absolute;
+	overflow: visible;
+	left: 0;
+	top: 50px;
+	background-color: #FFF;
+	border: 1px solid #000;
+	color: #000;
+}
+
+#appmenu li:hover a {
+	position: relative
+}
+
+#appmenu li:hover span {
+	display: inline-block;
+	white-space: nowrap;
+}
+
+#appmenu li:hover span {
+	background-color: white;
+	-webkit-border-radius: 3px;
+	-moz-border-radius: 3px;
+	border-radius: 3px;
+	border-top-left-radius: 0;
+	border-top-right-radius: 0;
+	margin-top: 0;
+	border: none;
+	color: #333;
+	width: auto;
+	left: 50%;
+	transform: translateX(-50%);
+	padding: 2px 10px;
+	-webkit-filter: drop-shadow(0 0 5px rgba(150, 150, 150, 0.75));
+	-moz-filter: drop-shadow(0 0 5px rgba(150, 150, 150, 0.75));
+	-ms-filter: drop-shadow(0 0 5px rgba(150, 150, 150, 0.75));
+	-o-filter: drop-shadow(0 0 5px rgba(150, 150, 150, 0.75));
+	filter: drop-shadow(0 0 5px rgba(150, 150, 150, 0.75));
+}
+
+#appmenu li:hover span {
+	display: block;
+}
+
+#appmenu li:hover a:before,
+#appmenu li a.active:before {
+    content: " ";
+    border: solid transparent;
+    height: 0;
+    width: 0;
+    position: absolute;
+    pointer-events: none;
+    border-bottom-color: white;
+    border-width: 7px;
+    top:36px;
+    transform: translateX(-50%);
+    left: 50%;
+    z-index: 100;
 }
