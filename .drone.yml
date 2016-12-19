@@ -370,8 +370,8 @@ pipeline:
   phan:
     image: nextcloudci/php7.0:php7.0-7
     commands:
-      - cd /tmp/ && git clone https://github.com/nikic/php-ast.git
-      - cd /tmp/php-ast && phpize && ./configure && make install  && echo 'extension=ast.so' > /etc/php/7.0/cli/php.ini && cd .. && rm -rf php-ast
+      - git clone https://github.com/nikic/php-ast.git
+      - cd ./php-ast && phpize && ./configure && make install  && echo 'extension=ast.so' > /etc/php/7.0/cli/php.ini && cd .. && rm -rf php-ast
       - composer install
       - ./lib/composer/etsy/phan/phan  -p --processes 4
     when:
