@@ -367,59 +367,71 @@ pipeline:
     when:
       matrix:
         TESTS: db-codecov
+  phan:
+    image: nextcloudci/php7.0:php7.0-7
+    commands:
+      - cd /tmp/ && git clone https://github.com/nikic/php-ast.git
+      - cd /tmp/php-ast && phpize && ./configure && make install  && echo 'extension=ast.so' > /usr/local/etc/php/php.ini && cd .. && rm -rf php-ast
+      - composer install
+      - ./lib/composer/etsy/phan/phan  -p --processes 4
+    when:
+      matrix:
+        TESTS: phan
+
 matrix:
   include:
-    - TESTS: signed-off-check
-    - TESTS: htaccess-checker
-    - TESTS: nodb-codecov
-    - TESTS: db-codecov    
-    - TESTS: integration-capabilities_features
-    - TESTS: integration-federation_features
-    - TESTS: integration-auth
-    - TESTS: integration-carddav
-    - TESTS: integration-dav-v2
-    - TESTS: integration-ocs-v1
-    - TESTS: integration-sharing-v1
-    - TESTS: integration-checksums
-    - TESTS: integration-external-storage
-    - TESTS: integration-provisioning-v1
-    - TESTS: integration-tags
-    - TESTS: integration-caldav
-    - TESTS: integration-comments
-    - TESTS: integration-favorites
-    - TESTS: integration-provisioning-v2
-    - TESTS: integration-webdav-related
-    - TESTS: integration-sharees-features
-    - TESTS: integration-setup-features
-    - TESTS: integration-filesdrop-features
-    - TESTS: jsunit
-    - TESTS: check-autoloader
-    - TESTS: app-check-code
-    - TESTS: syntax-php5.6
-    - TESTS: syntax-php7.0
-    - TESTS: syntax-php7.1
-    - TESTS: litmus-v1
-    - TESTS: litmus-v2
-    - TESTS: caldavtester
-    - TESTS: carddavtester
-    - DB: NODB
-      PHP: 5.6
-    - DB: NODB
-      PHP: 7.0
-    - DB: NODB
-      PHP: 7.1
-    - DB: sqlite
-      PHP: 5.6
-    - DB: sqlite
-      PHP: 7.0
-    - DB: sqlite
-      PHP: 7.1
-    - DB: mysql
-      PHP: 5.6
-    - DB: postgres
-      PHP: 5.6
-    - DB: mysqlmb4
-      PHP: 5.6
+    - TESTS: phan
+#    - TESTS: signed-off-check
+#    - TESTS: htaccess-checker
+#    - TESTS: nodb-codecov
+#    - TESTS: db-codecov
+#    - TESTS: integration-capabilities_features
+#    - TESTS: integration-federation_features
+#    - TESTS: integration-auth
+#    - TESTS: integration-carddav
+#    - TESTS: integration-dav-v2
+#    - TESTS: integration-ocs-v1
+#    - TESTS: integration-sharing-v1
+#    - TESTS: integration-checksums
+#    - TESTS: integration-external-storage
+#    - TESTS: integration-provisioning-v1
+#    - TESTS: integration-tags
+#    - TESTS: integration-caldav
+#    - TESTS: integration-comments
+#    - TESTS: integration-favorites
+#    - TESTS: integration-provisioning-v2
+#    - TESTS: integration-webdav-related
+#    - TESTS: integration-sharees-features
+#    - TESTS: integration-setup-features
+#    - TESTS: integration-filesdrop-features
+#    - TESTS: jsunit
+#    - TESTS: check-autoloader
+#    - TESTS: app-check-code
+#    - TESTS: syntax-php5.6
+#    - TESTS: syntax-php7.0
+#    - TESTS: syntax-php7.1
+#    - TESTS: litmus-v1
+#    - TESTS: litmus-v2
+#    - TESTS: caldavtester
+#    - TESTS: carddavtester
+#    - DB: NODB
+#      PHP: 5.6
+#    - DB: NODB
+#      PHP: 7.0
+#    - DB: NODB
+#      PHP: 7.1
+#    - DB: sqlite
+#      PHP: 5.6
+#    - DB: sqlite
+#      PHP: 7.0
+#    - DB: sqlite
+#      PHP: 7.1
+#    - DB: mysql
+#      PHP: 5.6
+#    - DB: postgres
+#      PHP: 5.6
+#    - DB: mysqlmb4
+#      PHP: 5.6
 
 services:
   cache:
