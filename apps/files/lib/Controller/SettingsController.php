@@ -27,25 +27,24 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use OCP\Util;
-
-class SettingsController extends Controller {
-	public function __construct($appName, IRequest $request) {
-		parent::__construct($appName, $request);
-	}
-
-	/**
-	 * @param string $maxUploadSize
-	 * @return JSONResponse
-	 */
-	public function setMaxUploadSize($maxUploadSize) {
-		$setMaxSize = \OC_Files::setUploadLimit(Util::computerFileSize($maxUploadSize));
-
-		if ($setMaxSize === false) {
-			return new JSONResponse([], Http::STATUS_BAD_REQUEST);
-		} else {
-			return new JSONResponse([
-				'maxUploadSize' => Util::humanFileSize($setMaxSize)
-			]);
-		}
-	}
+class SettingsController extends Controller
+{
+    public function __construct($appName, IRequest $request)
+    {
+        parent::__construct($appName, $request);
+    }
+    /**
+     * @param string $maxUploadSize
+     * @return JSONResponse
+     */
+    public function setMaxUploadSize($maxUploadSize)
+    {
+        $maxUploadSize = $_GET['maxUploadSize'];
+        $setMaxSize = \OC_Files::setUploadLimit(Util::computerFileSize($maxUploadSize));
+        if ($setMaxSize === false) {
+            return new JSONResponse([], Http::STATUS_BAD_REQUEST);
+        } else {
+            return new JSONResponse(['maxUploadSize' => Util::humanFileSize($setMaxSize)]);
+        }
+    }
 }

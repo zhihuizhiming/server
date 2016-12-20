@@ -33,70 +33,58 @@ use OCP\IPreview;
 use OCP\IRequest;
 use OCP\Share\Exceptions\ShareNotFound;
 use OCP\Share\IManager as ShareManager;
-
-class PublicPreviewController extends Controller {
-
-	/** @var ShareManager */
-	private $shareManager;
-
-	/** @var IPreview */
-	private $previewManager;
-
-	public function __construct($appName,
-								IRequest $request,
-								ShareManager $shareManger,
-								IPreview $previewManager) {
-		parent::__construct($appName, $request);
-
-		$this->shareManager = $shareManger;
-		$this->previewManager = $previewManager;
-	}
-
-	/**
-	 * @PublicPage
-	 * @NoCSRFRequired
-	 *
-	 * @param string $file
-	 * @param int $x
-	 * @param int $y
-	 * @param string $t
-	 * @param bool $a
-	 * @return DataResponse|FileDisplayResponse
-	 */
-	public function getPreview(
-		$file = '',
-		$x = 32,
-		$y = 32,
-		$t = '',
-		$a = false
-	) {
-
-		if ($t === '' || $x === 0 || $y === 0) {
-			return new DataResponse([], Http::STATUS_BAD_REQUEST);
-		}
-
-		try {
-			$share = $this->shareManager->getShareByToken($t);
-		} catch (ShareNotFound $e) {
-			return new DataResponse([], Http::STATUS_NOT_FOUND);
-		}
-
-		if (($share->getPermissions() & Constants::PERMISSION_READ) === 0) {
-			return new DataResponse([], Http::STATUS_FORBIDDEN);
-		}
-
-		try {
-			$node = $share->getNode();
-			if ($node instanceof Folder) {
-				$file = $node->get($file);
-			} else {
-				$file = $node;
-			}
-
-			$f = $this->previewManager->getPreview($file, $x, $y, !$a);
-			return new FileDisplayResponse($f, Http::STATUS_OK, ['Content-Type' => $f->getMimeType()]);
-		} catch (NotFoundException $e) {
-			return new DataResponse([], Http::STATUS_NOT_FOUND);
-		}
-	}
+class PublicPreviewController extends Controller
+{
+    /** @var ShareManager */
+    private $shareManager;
+    /** @var IPreview */
+    private $previewManager;
+    public function __construct($appName, IRequest $request, ShareManager $shareManger, IPreview $previewManager)
+    {
+        parent::__construct($appName, $request);
+        $this->shareManager = $shareManger;
+        $this->previewManager = $previewManager;
+    }
+    /**
+     * @PublicPage
+     * @NoCSRFRequired
+     *
+     * @param string $file
+     * @param int $x
+     * @param int $y
+     * @param string $t
+     * @param bool $a
+     * @return DataResponse|FileDisplayResponse
+     */
+    public function getPreview($file = '', $x = 32, $y = 32, $t = '', $a = false)
+    {
+        $a = $_GET['a'];
+        $t = $_GET['t'];
+        $y = $_GET['y'];
+        $x = $_GET['x'];
+        $file = $_GET['file'];
+        if ($t === '' || $x === 0 || $y === 0) {
+            return new DataResponse([], Http::STATUS_BAD_REQUEST);
+        }
+        try {
+            $share = $this->shareManager->getShareByToken($t);
+        } catch (ShareNotFound $e) {
+            return new DataResponse([], Http::STATUS_NOT_FOUND);
+        }
+        if (($share->getPermissions() & Constants::PERMISSION_READ) === 0) {
+            return new DataResponse([], Http::STATUS_FORBIDDEN);
+        }
+        try {
+            $node = $share->getNode();
+            if ($node instanceof Folder) {
+                $file = $node->get($file);
+            } else {
+                $file = $node;
+            }
+            $f = $this->previewManager->getPreview($file, $x, $y, !$a);
+            return new FileDisplayResponse($f, Http::STATUS_OK, ['Content-Type' => $f->getMimeType()]);
+        } catch (NotFoundException $e) {
+            return new DataResponse([], Http::STATUS_NOT_FOUND);
+        }
+    }
 }

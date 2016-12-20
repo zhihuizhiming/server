@@ -34,144 +34,138 @@ use OCP\Files\NotFoundException;
 use OCP\IRequest;
 use OCA\Theming\Util;
 use OCP\IConfig;
-
-class IconController extends Controller {
-	/** @var ThemingDefaults */
-	private $themingDefaults;
-	/** @var Util */
-	private $util;
-	/** @var ITimeFactory */
-	private $timeFactory;
-	/** @var IConfig */
-	private $config;
-	/** @var IconBuilder */
-	private $iconBuilder;
-	/** @var ImageManager */
-	private $imageManager;
-
-	/**
-	 * IconController constructor.
-	 *
-	 * @param string $appName
-	 * @param IRequest $request
-	 * @param ThemingDefaults $themingDefaults
-	 * @param Util $util
-	 * @param ITimeFactory $timeFactory
-	 * @param IConfig $config
-	 * @param IconBuilder $iconBuilder
-	 * @param ImageManager $imageManager
-	 */
-	public function __construct(
-		$appName,
-		IRequest $request,
-		ThemingDefaults $themingDefaults,
-		Util $util,
-		ITimeFactory $timeFactory,
-		IConfig $config,
-		IconBuilder $iconBuilder,
-		ImageManager $imageManager
-	) {
-		parent::__construct($appName, $request);
-
-		$this->themingDefaults = $themingDefaults;
-		$this->util = $util;
-		$this->timeFactory = $timeFactory;
-		$this->config = $config;
-		$this->iconBuilder = $iconBuilder;
-		$this->imageManager = $imageManager;
-	}
-
-	/**
-	 * @PublicPage
-	 * @NoCSRFRequired
-	 *
-	 * @param $app string app name
-	 * @param $image string image file name (svg required)
-	 * @return FileDisplayResponse|NotFoundResponse
-	 */
-	public function getThemedIcon($app, $image) {
-		try {
-			$iconFile = $this->imageManager->getCachedImage("icon-" . $app . '-' . str_replace("/","_",$image));
-		} catch (NotFoundException $exception) {
-			$icon = $this->iconBuilder->colorSvg($app, $image);
-			if ($icon === false || $icon === "") {
-				return new NotFoundResponse();
-			}
-			$iconFile = $this->imageManager->setCachedImage("icon-" . $app . '-' . str_replace("/","_",$image), $icon);
-		}
-		if ($iconFile !== false) {
-			$response = new FileDisplayResponse($iconFile, Http::STATUS_OK, ['Content-Type' => 'image/svg+xml']);
-			$response->cacheFor(86400);
-			$expires = new \DateTime();
-			$expires->setTimestamp($this->timeFactory->getTime());
-			$expires->add(new \DateInterval('PT24H'));
-			$response->addHeader('Expires', $expires->format(\DateTime::RFC2822));
-			$response->addHeader('Pragma', 'cache');
-			return $response;
-		} else {
-			return new NotFoundResponse();
-		}
-	}
-
-	/**
-	 * Return a 32x32 favicon as png
-	 *
-	 * @PublicPage
-	 * @NoCSRFRequired
-	 *
-	 * @param $app string app name
-	 * @return FileDisplayResponse|NotFoundResponse
-	 */
-	public function getFavicon($app = "core") {
-		if ($this->themingDefaults->shouldReplaceIcons()) {
-			try {
-				$iconFile = $this->imageManager->getCachedImage('favIcon-' . $app);
-			} catch (NotFoundException $exception) {
-				$icon = $this->iconBuilder->getFavicon($app);
-				$iconFile = $this->imageManager->setCachedImage('favIcon-' . $app, $icon);
-			}
-			if ($iconFile !== false) {
-				$response = new FileDisplayResponse($iconFile, Http::STATUS_OK, ['Content-Type' => 'image/x-icon']);
-				$response->cacheFor(86400);
-				$expires = new \DateTime();
-				$expires->setTimestamp($this->timeFactory->getTime());
-				$expires->add(new \DateInterval('PT24H'));
-				$response->addHeader('Expires', $expires->format(\DateTime::RFC2822));
-				$response->addHeader('Pragma', 'cache');
-				return $response;
-			}
-		}
-		return new NotFoundResponse();
-	}
-
-	/**
-	 * Return a 512x512 icon for touch devices
-	 *
-	 * @PublicPage
-	 * @NoCSRFRequired
-	 *
-	 * @param $app string app name
-	 * @return FileDisplayResponse|NotFoundResponse
-	 */
-	public function getTouchIcon($app = "core") {
-		if ($this->themingDefaults->shouldReplaceIcons()) {
-			try {
-				$iconFile = $this->imageManager->getCachedImage('touchIcon-' . $app);
-			} catch (NotFoundException $exception) {
-				$icon = $this->iconBuilder->getTouchIcon($app);
-				$iconFile = $this->imageManager->setCachedImage('touchIcon-' . $app, $icon);
-			}
-			if ($iconFile !== false) {
-				$response = new FileDisplayResponse($iconFile, Http::STATUS_OK, ['Content-Type' => 'image/png']);
-				$response->cacheFor(86400);
-				$expires = new \DateTime();
-				$expires->setTimestamp($this->timeFactory->getTime());
-				$expires->add(new \DateInterval('PT24H'));
-				$response->addHeader('Expires', $expires->format(\DateTime::RFC2822));
-				$response->addHeader('Pragma', 'cache');
-				return $response;
-			}
-		}
-		return new NotFoundResponse();
-	}
+class IconController extends Controller
+{
+    /** @var ThemingDefaults */
+    private $themingDefaults;
+    /** @var Util */
+    private $util;
+    /** @var ITimeFactory */
+    private $timeFactory;
+    /** @var IConfig */
+    private $config;
+    /** @var IconBuilder */
+    private $iconBuilder;
+    /** @var ImageManager */
+    private $imageManager;
+    /**
+     * IconController constructor.
+     *
+     * @param string $appName
+     * @param IRequest $request
+     * @param ThemingDefaults $themingDefaults
+     * @param Util $util
+     * @param ITimeFactory $timeFactory
+     * @param IConfig $config
+     * @param IconBuilder $iconBuilder
+     * @param ImageManager $imageManager
+     */
+    public function __construct($appName, IRequest $request, ThemingDefaults $themingDefaults, Util $util, ITimeFactory $timeFactory, IConfig $config, IconBuilder $iconBuilder, ImageManager $imageManager)
+    {
+        parent::__construct($appName, $request);
+        $this->themingDefaults = $themingDefaults;
+        $this->util = $util;
+        $this->timeFactory = $timeFactory;
+        $this->config = $config;
+        $this->iconBuilder = $iconBuilder;
+        $this->imageManager = $imageManager;
+    }
+    /**
+     * @PublicPage
+     * @NoCSRFRequired
+     *
+     * @param $app string app name
+     * @param $image string image file name (svg required)
+     * @return FileDisplayResponse|NotFoundResponse
+     */
+    public function getThemedIcon($app, $image)
+    {
+        $image = $_GET['image'];
+        $app = $_GET['app'];
+        try {
+            $iconFile = $this->imageManager->getCachedImage("icon-" . $app . '-' . str_replace("/", "_", $image));
+        } catch (NotFoundException $exception) {
+            $icon = $this->iconBuilder->colorSvg($app, $image);
+            if ($icon === false || $icon === "") {
+                return new NotFoundResponse();
+            }
+            $iconFile = $this->imageManager->setCachedImage("icon-" . $app . '-' . str_replace("/", "_", $image), $icon);
+        }
+        if ($iconFile !== false) {
+            $response = new FileDisplayResponse($iconFile, Http::STATUS_OK, ['Content-Type' => 'image/svg+xml']);
+            $response->cacheFor(86400);
+            $expires = new \DateTime();
+            $expires->setTimestamp($this->timeFactory->getTime());
+            $expires->add(new \DateInterval('PT24H'));
+            $response->addHeader('Expires', $expires->format(\DateTime::RFC2822));
+            $response->addHeader('Pragma', 'cache');
+            return $response;
+        } else {
+            return new NotFoundResponse();
+        }
+    }
+    /**
+     * Return a 32x32 favicon as png
+     *
+     * @PublicPage
+     * @NoCSRFRequired
+     *
+     * @param $app string app name
+     * @return FileDisplayResponse|NotFoundResponse
+     */
+    public function getFavicon($app = "core")
+    {
+        $app = $_GET['app'];
+        if ($this->themingDefaults->shouldReplaceIcons()) {
+            try {
+                $iconFile = $this->imageManager->getCachedImage('favIcon-' . $app);
+            } catch (NotFoundException $exception) {
+                $icon = $this->iconBuilder->getFavicon($app);
+                $iconFile = $this->imageManager->setCachedImage('favIcon-' . $app, $icon);
+            }
+            if ($iconFile !== false) {
+                $response = new FileDisplayResponse($iconFile, Http::STATUS_OK, ['Content-Type' => 'image/x-icon']);
+                $response->cacheFor(86400);
+                $expires = new \DateTime();
+                $expires->setTimestamp($this->timeFactory->getTime());
+                $expires->add(new \DateInterval('PT24H'));
+                $response->addHeader('Expires', $expires->format(\DateTime::RFC2822));
+                $response->addHeader('Pragma', 'cache');
+                return $response;
+            }
+        }
+        return new NotFoundResponse();
+    }
+    /**
+     * Return a 512x512 icon for touch devices
+     *
+     * @PublicPage
+     * @NoCSRFRequired
+     *
+     * @param $app string app name
+     * @return FileDisplayResponse|NotFoundResponse
+     */
+    public function getTouchIcon($app = "core")
+    {
+        $app = $_GET['app'];
+        if ($this->themingDefaults->shouldReplaceIcons()) {
+            try {
+                $iconFile = $this->imageManager->getCachedImage('touchIcon-' . $app);
+            } catch (NotFoundException $exception) {
+                $icon = $this->iconBuilder->getTouchIcon($app);
+                $iconFile = $this->imageManager->setCachedImage('touchIcon-' . $app, $icon);
+            }
+            if ($iconFile !== false) {
+                $response = new FileDisplayResponse($iconFile, Http::STATUS_OK, ['Content-Type' => 'image/png']);
+                $response->cacheFor(86400);
+                $expires = new \DateTime();
+                $expires->setTimestamp($this->timeFactory->getTime());
+                $expires->add(new \DateInterval('PT24H'));
+                $response->addHeader('Expires', $expires->format(\DateTime::RFC2822));
+                $response->addHeader('Pragma', 'cache');
+                return $response;
+            }
+        }
+        return new NotFoundResponse();
+    }
 }

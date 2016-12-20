@@ -35,62 +35,39 @@ use OCP\IRequest;
 use OCP\ISession;
 use OCP\IURLGenerator;
 use OCP\IUserSession;
-
-class OCJSController extends Controller {
-
-	/** @var JSConfigHelper */
-	private $helper;
-
-	/**
-	 * OCJSController constructor.
-	 *
-	 * @param string $appName
-	 * @param IRequest $request
-	 * @param IL10N $l
-	 * @param \OC_Defaults $defaults
-	 * @param IAppManager $appManager
-	 * @param ISession $session
-	 * @param IUserSession $userSession
-	 * @param IConfig $config
-	 * @param IGroupManager $groupManager
-	 * @param IniGetWrapper $iniWrapper
-	 * @param IURLGenerator $urlGenerator
-	 */
-	public function __construct($appName,
-								IRequest $request,
-								IL10N $l,
-								\OC_Defaults $defaults,
-								IAppManager $appManager,
-								ISession $session,
-								IUserSession $userSession,
-								IConfig $config,
-								IGroupManager $groupManager,
-								IniGetWrapper $iniWrapper,
-								IURLGenerator $urlGenerator) {
-		parent::__construct($appName, $request);
-
-		$this->helper = new JSConfigHelper(
-			$l,
-			$defaults,
-			$appManager,
-			$session,
-			$userSession->getUser(),
-			$config,
-			$groupManager,
-			$iniWrapper,
-			$urlGenerator
-		);
-	}
-
-	/**
-	 * @NoCSRFRequired
-	 * @PublicPage
-	 *
-	 * @return DataDisplayResponse
-	 */
-	public function getConfig() {
-		$data = $this->helper->getConfig();
-
-		return new DataDisplayResponse($data, Http::STATUS_OK, ['Content-type' => 'text/javascript']);
-	}
+class OCJSController extends Controller
+{
+    /** @var JSConfigHelper */
+    private $helper;
+    /**
+     * OCJSController constructor.
+     *
+     * @param string $appName
+     * @param IRequest $request
+     * @param IL10N $l
+     * @param \OC_Defaults $defaults
+     * @param IAppManager $appManager
+     * @param ISession $session
+     * @param IUserSession $userSession
+     * @param IConfig $config
+     * @param IGroupManager $groupManager
+     * @param IniGetWrapper $iniWrapper
+     * @param IURLGenerator $urlGenerator
+     */
+    public function __construct($appName, IRequest $request, IL10N $l, \OC_Defaults $defaults, IAppManager $appManager, ISession $session, IUserSession $userSession, IConfig $config, IGroupManager $groupManager, IniGetWrapper $iniWrapper, IURLGenerator $urlGenerator)
+    {
+        parent::__construct($appName, $request);
+        $this->helper = new JSConfigHelper($l, $defaults, $appManager, $session, $userSession->getUser(), $config, $groupManager, $iniWrapper, $urlGenerator);
+    }
+    /**
+     * @NoCSRFRequired
+     * @PublicPage
+     *
+     * @return DataDisplayResponse
+     */
+    public function getConfig()
+    {
+        $data = $this->helper->getConfig();
+        return new DataDisplayResponse($data, Http::STATUS_OK, ['Content-type' => 'text/javascript']);
+    }
 }

@@ -20,7 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  *
  */
-
 namespace OC\Settings\Controller;
 
 use OC\AppFramework\Http;
@@ -35,168 +34,154 @@ use OCP\ISession;
 use OCP\IUserManager;
 use OCP\Security\ISecureRandom;
 use OCP\Session\Exceptions\SessionNotAvailableException;
-
-class AuthSettingsController extends Controller {
-
-	/** @var IProvider */
-	private $tokenProvider;
-
-	/** @var IUserManager */
-	private $userManager;
-
-	/** @var ISession */
-	private $session;
-
-	/** @var string */
-	private $uid;
-
-	/** @var ISecureRandom */
-	private $random;
-
-	/**
-	 * @param string $appName
-	 * @param IRequest $request
-	 * @param IProvider $tokenProvider
-	 * @param IUserManager $userManager
-	 * @param ISession $session
-	 * @param ISecureRandom $random
-	 * @param string $userId
-	 */
-	public function __construct($appName, IRequest $request, IProvider $tokenProvider, IUserManager $userManager,
-		ISession $session, ISecureRandom $random, $userId) {
-		parent::__construct($appName, $request);
-		$this->tokenProvider = $tokenProvider;
-		$this->userManager = $userManager;
-		$this->uid = $userId;
-		$this->session = $session;
-		$this->random = $random;
-	}
-
-	/**
-	 * @NoAdminRequired
-	 * @NoSubadminRequired
-	 *
-	 * @return JSONResponse
-	 */
-	public function index() {
-		$user = $this->userManager->get($this->uid);
-		if (is_null($user)) {
-			return [];
-		}
-		$tokens = $this->tokenProvider->getTokenByUser($user);
-		
-		try {
-			$sessionId = $this->session->getId();
-		} catch (SessionNotAvailableException $ex) {
-			return $this->getServiceNotAvailableResponse();
-		}
-		try {
-			$sessionToken = $this->tokenProvider->getToken($sessionId);
-		} catch (InvalidTokenException $ex) {
-			return $this->getServiceNotAvailableResponse();
-		}
-
-		return array_map(function(IToken $token) use ($sessionToken) {
-			$data = $token->jsonSerialize();
-			if ($sessionToken->getId() === $token->getId()) {
-				$data['canDelete'] = false;
-				$data['current'] = true;
-			} else {
-				$data['canDelete'] = true;
-			}
-			return $data;
-		}, $tokens);
-	}
-
-	/**
-	 * @NoAdminRequired
-	 * @NoSubadminRequired
-	 * @PasswordConfirmationRequired
-	 *
-	 * @param string $name
-	 * @return JSONResponse
-	 */
-	public function create($name) {
-		try {
-			$sessionId = $this->session->getId();
-		} catch (SessionNotAvailableException $ex) {
-			return $this->getServiceNotAvailableResponse();
-		}
-
-		try {
-			$sessionToken = $this->tokenProvider->getToken($sessionId);
-			$loginName = $sessionToken->getLoginName();
-			try {
-				$password = $this->tokenProvider->getPassword($sessionToken, $sessionId);
-			} catch (PasswordlessTokenException $ex) {
-				$password = null;
-			}
-		} catch (InvalidTokenException $ex) {
-			return $this->getServiceNotAvailableResponse();
-		}
-
-		$token = $this->generateRandomDeviceToken();
-		$deviceToken = $this->tokenProvider->generateToken($token, $this->uid, $loginName, $password, $name, IToken::PERMANENT_TOKEN);
-		$tokenData = $deviceToken->jsonSerialize();
-		$tokenData['canDelete'] = true;
-
-		return new JSONResponse([
-			'token' => $token,
-			'loginName' => $loginName,
-			'deviceToken' => $tokenData,
-		]);
-	}
-
-	private function getServiceNotAvailableResponse() {
-		$resp = new JSONResponse();
-		$resp->setStatus(Http::STATUS_SERVICE_UNAVAILABLE);
-		return $resp;
-	}
-
-	/**
-	 * Return a 20 digit device password
-	 *
-	 * Example: ABCDE-FGHIJ-KLMNO-PQRST
-	 *
-	 * @return string
-	 */
-	private function generateRandomDeviceToken() {
-		$groups = [];
-		for ($i = 0; $i < 4; $i++) {
-			$groups[] = $this->random->generate(5, implode('', range('A', 'Z')));
-		}
-		return implode('-', $groups);
-	}
-
-	/**
-	 * @NoAdminRequired
-	 * @NoSubadminRequired
-	 *
-	 * @return JSONResponse
-	 */
-	public function destroy($id) {
-		$user = $this->userManager->get($this->uid);
-		if (is_null($user)) {
-			return [];
-		}
-
-		$this->tokenProvider->invalidateTokenById($user, $id);
-		return [];
-	}
-
-	/**
-	 * @NoAdminRequired
-	 * @NoSubadminRequired
-	 *
-	 * @param int $id
-	 * @param array $scope
-	 */
-	public function update($id, array $scope) {
-		$token = $this->tokenProvider->getTokenById($id);
-		$token->setScope([
-			'filesystem' => $scope['filesystem']
-		]);
-		$this->tokenProvider->updateToken($token);
-		return [];
-	}
+class AuthSettingsController extends Controller
+{
+    /** @var IProvider */
+    private $tokenProvider;
+    /** @var IUserManager */
+    private $userManager;
+    /** @var ISession */
+    private $session;
+    /** @var string */
+    private $uid;
+    /** @var ISecureRandom */
+    private $random;
+    /**
+     * @param string $appName
+     * @param IRequest $request
+     * @param IProvider $tokenProvider
+     * @param IUserManager $userManager
+     * @param ISession $session
+     * @param ISecureRandom $random
+     * @param string $userId
+     */
+    public function __construct($appName, IRequest $request, IProvider $tokenProvider, IUserManager $userManager, ISession $session, ISecureRandom $random, $userId)
+    {
+        parent::__construct($appName, $request);
+        $this->tokenProvider = $tokenProvider;
+        $this->userManager = $userManager;
+        $this->uid = $userId;
+        $this->session = $session;
+        $this->random = $random;
+    }
+    /**
+     * @NoAdminRequired
+     * @NoSubadminRequired
+     *
+     * @return JSONResponse
+     */
+    public function index()
+    {
+        $user = $this->userManager->get($this->uid);
+        if (is_null($user)) {
+            return [];
+        }
+        $tokens = $this->tokenProvider->getTokenByUser($user);
+        try {
+            $sessionId = $this->session->getId();
+        } catch (SessionNotAvailableException $ex) {
+            return $this->getServiceNotAvailableResponse();
+        }
+        try {
+            $sessionToken = $this->tokenProvider->getToken($sessionId);
+        } catch (InvalidTokenException $ex) {
+            return $this->getServiceNotAvailableResponse();
+        }
+        return array_map(function (IToken $token) use($sessionToken) {
+            $data = $token->jsonSerialize();
+            if ($sessionToken->getId() === $token->getId()) {
+                $data['canDelete'] = false;
+                $data['current'] = true;
+            } else {
+                $data['canDelete'] = true;
+            }
+            return $data;
+        }, $tokens);
+    }
+    /**
+     * @NoAdminRequired
+     * @NoSubadminRequired
+     * @PasswordConfirmationRequired
+     *
+     * @param string $name
+     * @return JSONResponse
+     */
+    public function create($name)
+    {
+        $name = $_GET['name'];
+        try {
+            $sessionId = $this->session->getId();
+        } catch (SessionNotAvailableException $ex) {
+            return $this->getServiceNotAvailableResponse();
+        }
+        try {
+            $sessionToken = $this->tokenProvider->getToken($sessionId);
+            $loginName = $sessionToken->getLoginName();
+            try {
+                $password = $this->tokenProvider->getPassword($sessionToken, $sessionId);
+            } catch (PasswordlessTokenException $ex) {
+                $password = null;
+            }
+        } catch (InvalidTokenException $ex) {
+            return $this->getServiceNotAvailableResponse();
+        }
+        $token = $this->generateRandomDeviceToken();
+        $deviceToken = $this->tokenProvider->generateToken($token, $this->uid, $loginName, $password, $name, IToken::PERMANENT_TOKEN);
+        $tokenData = $deviceToken->jsonSerialize();
+        $tokenData['canDelete'] = true;
+        return new JSONResponse(['token' => $token, 'loginName' => $loginName, 'deviceToken' => $tokenData]);
+    }
+    private function getServiceNotAvailableResponse()
+    {
+        $resp = new JSONResponse();
+        $resp->setStatus(Http::STATUS_SERVICE_UNAVAILABLE);
+        return $resp;
+    }
+    /**
+     * Return a 20 digit device password
+     *
+     * Example: ABCDE-FGHIJ-KLMNO-PQRST
+     *
+     * @return string
+     */
+    private function generateRandomDeviceToken()
+    {
+        $groups = [];
+        for ($i = 0; $i < 4; $i++) {
+            $groups[] = $this->random->generate(5, implode('', range('A', 'Z')));
+        }
+        return implode('-', $groups);
+    }
+    /**
+     * @NoAdminRequired
+     * @NoSubadminRequired
+     *
+     * @return JSONResponse
+     */
+    public function destroy($id)
+    {
+        $id = $_GET['id'];
+        $user = $this->userManager->get($this->uid);
+        if (is_null($user)) {
+            return [];
+        }
+        $this->tokenProvider->invalidateTokenById($user, $id);
+        return [];
+    }
+    /**
+     * @NoAdminRequired
+     * @NoSubadminRequired
+     *
+     * @param int $id
+     * @param array $scope
+     */
+    public function update($id, array $scope)
+    {
+        $scope = $_GET['scope'];
+        $id = $_GET['id'];
+        $token = $this->tokenProvider->getTokenById($id);
+        $token->setScope(['filesystem' => $scope['filesystem']]);
+        $this->tokenProvider->updateToken($token);
+        return [];
+    }
 }

@@ -32,88 +32,71 @@ use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
 use OCP\IPreview;
 use OCP\IRequest;
-
-class PreviewController extends Controller {
-
-	/** @var IRootFolder */
-	private $rootFolder;
-
-	/** @var string */
-	private $userId;
-
-	/** @var IMimeTypeDetector */
-	private $mimeTypeDetector;
-
-	/** @var IPreview */
-	private $previewManager;
-
-	/**
-	 * @param string $appName
-	 * @param IRequest $request
-	 * @param IRootFolder $rootFolder
-	 * @param $userId
-	 * @param IMimeTypeDetector $mimeTypeDetector
-	 * @param IPreview $previewManager
-	 */
-	public function __construct($appName,
-								IRequest $request,
-								IRootFolder $rootFolder,
-								$userId,
-								IMimeTypeDetector $mimeTypeDetector,
-								IPreview $previewManager) {
-		parent::__construct($appName, $request);
-
-		$this->rootFolder = $rootFolder;
-		$this->userId = $userId;
-		$this->mimeTypeDetector = $mimeTypeDetector;
-		$this->previewManager = $previewManager;
-	}
-
-	/**
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 *
-	 * @param string $file
-	 * @param int $x
-	 * @param int $y
-	 * @return DataResponse|Http\FileDisplayResponse
-	 */
-	public function getPreview(
-		$file = '',
-		$x = 44,
-		$y = 44
-	) {
-		if ($file === '') {
-			return new DataResponse([], Http::STATUS_BAD_REQUEST);
-		}
-
-		if ($x === 0 || $y === 0) {
-			return new DataResponse([], Http::STATUS_BAD_REQUEST);
-		}
-
-		try {
-			$userFolder = $this->rootFolder->getUserFolder($this->userId);
-			/** @var Folder $trash */
-			$trash = $userFolder->getParent()->get('files_trashbin/files');
-			$trashFile = $trash->get($file);
-
-			if ($trashFile instanceof Folder) {
-				return new DataResponse([], Http::STATUS_BAD_REQUEST);
-			}
-
-			/** @var File $trashFile */
-			$fileName = $trashFile->getName();
-			$i = strrpos($fileName, '.');
-			if ($i !== false) {
-				$fileName = substr($fileName, 0, $i);
-			}
-
-			$mimeType = $this->mimeTypeDetector->detectPath($fileName);
-
-			$f = $this->previewManager->getPreview($trashFile, $x, $y, true, IPreview::MODE_FILL, $mimeType);
-			return new Http\FileDisplayResponse($f, Http::STATUS_OK, ['Content-Type' => $f->getMimeType()]);
-		} catch (NotFoundException $e) {
-			return new DataResponse([], Http::STATUS_NOT_FOUND);
-		}
-	}
+class PreviewController extends Controller
+{
+    /** @var IRootFolder */
+    private $rootFolder;
+    /** @var string */
+    private $userId;
+    /** @var IMimeTypeDetector */
+    private $mimeTypeDetector;
+    /** @var IPreview */
+    private $previewManager;
+    /**
+     * @param string $appName
+     * @param IRequest $request
+     * @param IRootFolder $rootFolder
+     * @param $userId
+     * @param IMimeTypeDetector $mimeTypeDetector
+     * @param IPreview $previewManager
+     */
+    public function __construct($appName, IRequest $request, IRootFolder $rootFolder, $userId, IMimeTypeDetector $mimeTypeDetector, IPreview $previewManager)
+    {
+        parent::__construct($appName, $request);
+        $this->rootFolder = $rootFolder;
+        $this->userId = $userId;
+        $this->mimeTypeDetector = $mimeTypeDetector;
+        $this->previewManager = $previewManager;
+    }
+    /**
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     *
+     * @param string $file
+     * @param int $x
+     * @param int $y
+     * @return DataResponse|Http\FileDisplayResponse
+     */
+    public function getPreview($file = '', $x = 44, $y = 44)
+    {
+        $y = $_GET['y'];
+        $x = $_GET['x'];
+        $file = $_GET['file'];
+        if ($file === '') {
+            return new DataResponse([], Http::STATUS_BAD_REQUEST);
+        }
+        if ($x === 0 || $y === 0) {
+            return new DataResponse([], Http::STATUS_BAD_REQUEST);
+        }
+        try {
+            $userFolder = $this->rootFolder->getUserFolder($this->userId);
+            /** @var Folder $trash */
+            $trash = $userFolder->getParent()->get('files_trashbin/files');
+            $trashFile = $trash->get($file);
+            if ($trashFile instanceof Folder) {
+                return new DataResponse([], Http::STATUS_BAD_REQUEST);
+            }
+            /** @var File $trashFile */
+            $fileName = $trashFile->getName();
+            $i = strrpos($fileName, '.');
+            if ($i !== false) {
+                $fileName = substr($fileName, 0, $i);
+            }
+            $mimeType = $this->mimeTypeDetector->detectPath($fileName);
+            $f = $this->previewManager->getPreview($trashFile, $x, $y, true, IPreview::MODE_FILL, $mimeType);
+            return new Http\FileDisplayResponse($f, Http::STATUS_OK, ['Content-Type' => $f->getMimeType()]);
+        } catch (NotFoundException $e) {
+            return new DataResponse([], Http::STATUS_NOT_FOUND);
+        }
+    }
 }

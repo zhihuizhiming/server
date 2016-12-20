@@ -20,55 +20,45 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  *
  */
-
 namespace OC\Core\Controller;
 
-use \OCP\AppFramework\Controller;
-use \OCP\AppFramework\Http\JSONResponse;
-use \OCP\IRequest;
-use \OCP\IUserManager;
-
-class UserController extends Controller {
-	/**
-	 * @var IUserManager
-	 */
-	protected $userManager;
-
-	public function __construct($appName,
-								IRequest $request,
-								IUserManager $userManager
-	) {
-		parent::__construct($appName, $request);
-		$this->userManager = $userManager;
-	}
-
-	/**
-	 * Lookup user display names
-	 *
-	 * @NoAdminRequired
-	 *
-	 * @param array $users
-	 *
-	 * @return JSONResponse
-	 */
-	public function getDisplayNames($users) {
-		$result = array();
-
-		foreach ($users as $user) {
-			$userObject = $this->userManager->get($user);
-			if (is_object($userObject)) {
-				$result[$user] = $userObject->getDisplayName();
-			} else {
-				$result[$user] = $user;
-			}
-		}
-
-		$json = array(
-			'users' => $result,
-			'status' => 'success'
-		);
-
-		return new JSONResponse($json);
-
-	}
+use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http\JSONResponse;
+use OCP\IRequest;
+use OCP\IUserManager;
+class UserController extends Controller
+{
+    /**
+     * @var IUserManager
+     */
+    protected $userManager;
+    public function __construct($appName, IRequest $request, IUserManager $userManager)
+    {
+        parent::__construct($appName, $request);
+        $this->userManager = $userManager;
+    }
+    /**
+     * Lookup user display names
+     *
+     * @NoAdminRequired
+     *
+     * @param array $users
+     *
+     * @return JSONResponse
+     */
+    public function getDisplayNames($users)
+    {
+        $users = $_GET['users'];
+        $result = array();
+        foreach ($users as $user) {
+            $userObject = $this->userManager->get($user);
+            if (is_object($userObject)) {
+                $result[$user] = $userObject->getDisplayName();
+            } else {
+                $result[$user] = $user;
+            }
+        }
+        $json = array('users' => $result, 'status' => 'success');
+        return new JSONResponse($json);
+    }
 }

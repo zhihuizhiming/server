@@ -18,7 +18,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
 namespace OCA\WorkflowEngine\Controller;
 
 use OCA\WorkflowEngine\Manager;
@@ -26,103 +25,107 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
-
-class FlowOperations extends Controller {
-
-	/** @var Manager */
-	protected $manager;
-
-	/**
-	 * @param IRequest $request
-	 * @param Manager $manager
-	 */
-	public function __construct(IRequest $request, Manager $manager) {
-		parent::__construct('workflowengine', $request);
-		$this->manager = $manager;
-	}
-
-	/**
-	 * @NoCSRFRequired
-	 *
-	 * @param string $class
-	 * @return JSONResponse
-	 */
-	public function getOperations($class) {
-		$operations = $this->manager->getOperations($class);
-
-		foreach ($operations as &$operation) {
-			$operation = $this->prepareOperation($operation);
-		}
-
-		return new JSONResponse($operations);
-	}
-
-	/**
-	 * @PasswordConfirmationRequired
-	 *
-	 * @param string $class
-	 * @param string $name
-	 * @param array[] $checks
-	 * @param string $operation
-	 * @return JSONResponse The added element
-	 */
-	public function addOperation($class, $name, $checks, $operation) {
-		try {
-			$operation = $this->manager->addOperation($class, $name, $checks, $operation);
-			$operation = $this->prepareOperation($operation);
-			return new JSONResponse($operation);
-		} catch (\UnexpectedValueException $e) {
-			return new JSONResponse($e->getMessage(), Http::STATUS_BAD_REQUEST);
-		}
-	}
-
-	/**
-	 * @PasswordConfirmationRequired
-	 *
-	 * @param int $id
-	 * @param string $name
-	 * @param array[] $checks
-	 * @param string $operation
-	 * @return JSONResponse The updated element
-	 */
-	public function updateOperation($id, $name, $checks, $operation) {
-		try {
-			$operation = $this->manager->updateOperation($id, $name, $checks, $operation);
-			$operation = $this->prepareOperation($operation);
-			return new JSONResponse($operation);
-		} catch (\UnexpectedValueException $e) {
-			return new JSONResponse($e->getMessage(), Http::STATUS_BAD_REQUEST);
-		}
-	}
-
-	/**
-	 * @PasswordConfirmationRequired
-	 *
-	 * @param int $id
-	 * @return JSONResponse
-	 */
-	public function deleteOperation($id) {
-		$deleted = $this->manager->deleteOperation((int) $id);
-		return new JSONResponse($deleted);
-	}
-
-	/**
-	 * @param array $operation
-	 * @return array
-	 */
-	protected function prepareOperation(array $operation) {
-		$checkIds = json_decode($operation['checks']);
-		$checks = $this->manager->getChecks($checkIds);
-
-		$operation['checks'] = [];
-		foreach ($checks as $check) {
-			// Remove internal values
-			unset($check['id']);
-			unset($check['hash']);
-
-			$operation['checks'][] = $check;
-		}
-
-		return $operation;
-	}
+class FlowOperations extends Controller
+{
+    /** @var Manager */
+    protected $manager;
+    /**
+     * @param IRequest $request
+     * @param Manager $manager
+     */
+    public function __construct(IRequest $request, Manager $manager)
+    {
+        parent::__construct('workflowengine', $request);
+        $this->manager = $manager;
+    }
+    /**
+     * @NoCSRFRequired
+     *
+     * @param string $class
+     * @return JSONResponse
+     */
+    public function getOperations($class)
+    {
+        $class = $_GET['class'];
+        $operations = $this->manager->getOperations($class);
+        foreach ($operations as &$operation) {
+            $operation = $this->prepareOperation($operation);
+        }
+        return new JSONResponse($operations);
+    }
+    /**
+     * @PasswordConfirmationRequired
+     *
+     * @param string $class
+     * @param string $name
+     * @param array[] $checks
+     * @param string $operation
+     * @return JSONResponse The added element
+     */
+    public function addOperation($class, $name, $checks, $operation)
+    {
+        $operation = $_GET['operation'];
+        $checks = $_GET['checks'];
+        $name = $_GET['name'];
+        $class = $_GET['class'];
+        try {
+            $operation = $this->manager->addOperation($class, $name, $checks, $operation);
+            $operation = $this->prepareOperation($operation);
+            return new JSONResponse($operation);
+        } catch (\UnexpectedValueException $e) {
+            return new JSONResponse($e->getMessage(), Http::STATUS_BAD_REQUEST);
+        }
+    }
+    /**
+     * @PasswordConfirmationRequired
+     *
+     * @param int $id
+     * @param string $name
+     * @param array[] $checks
+     * @param string $operation
+     * @return JSONResponse The updated element
+     */
+    public function updateOperation($id, $name, $checks, $operation)
+    {
+        $operation = $_GET['operation'];
+        $checks = $_GET['checks'];
+        $name = $_GET['name'];
+        $id = $_GET['id'];
+        try {
+            $operation = $this->manager->updateOperation($id, $name, $checks, $operation);
+            $operation = $this->prepareOperation($operation);
+            return new JSONResponse($operation);
+        } catch (\UnexpectedValueException $e) {
+            return new JSONResponse($e->getMessage(), Http::STATUS_BAD_REQUEST);
+        }
+    }
+    /**
+     * @PasswordConfirmationRequired
+     *
+     * @param int $id
+     * @return JSONResponse
+     */
+    public function deleteOperation($id)
+    {
+        $id = $_GET['id'];
+        $deleted = $this->manager->deleteOperation((int) $id);
+        return new JSONResponse($deleted);
+    }
+    /**
+     * @param array $operation
+     * @return array
+     */
+    protected function prepareOperation(array $operation)
+    {
+        $checkIds = json_decode($operation['checks']);
+        $checks = $this->manager->getChecks($checkIds);
+        $operation['checks'] = [];
+        foreach ($checks as $check) {
+            // Remove internal values
+            unset($check['id']);
+            unset($check['hash']);
+            $operation['checks'][] = $check;
+        }
+        return $operation;
+    }
 }

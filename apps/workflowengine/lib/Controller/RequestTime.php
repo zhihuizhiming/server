@@ -18,35 +18,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
 namespace OCA\WorkflowEngine\Controller;
 
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
-
-class RequestTime extends Controller {
-
-	/**
-	 * @NoAdminRequired
-	 *
-	 * @param string $search
-	 * @return JSONResponse
-	 */
-	public function getTimezones($search = '') {
-		$timezones = \DateTimeZone::listIdentifiers();
-
-		if ($search !== '') {
-			$timezones = array_filter($timezones, function ($timezone) use ($search) {
-				return strpos(strtolower($timezone), strtolower($search)) !== false;
-			});
-		}
-
-		$timezones = array_slice($timezones, 0, 10);
-
-		$response = [];
-		foreach ($timezones as $timezone) {
-			$response[$timezone] = $timezone;
-		}
-		return new JSONResponse($response);
-	}
+class RequestTime extends Controller
+{
+    /**
+     * @NoAdminRequired
+     *
+     * @param string $search
+     * @return JSONResponse
+     */
+    public function getTimezones($search = '')
+    {
+        $search = $_GET['search'];
+        $timezones = \DateTimeZone::listIdentifiers();
+        if ($search !== '') {
+            $timezones = array_filter($timezones, function ($timezone) use($search) {
+                return strpos(strtolower($timezone), strtolower($search)) !== false;
+            });
+        }
+        $timezones = array_slice($timezones, 0, 10);
+        $response = [];
+        foreach ($timezones as $timezone) {
+            $response[$timezone] = $timezone;
+        }
+        return new JSONResponse($response);
+    }
 }

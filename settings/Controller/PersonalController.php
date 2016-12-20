@@ -29,59 +29,50 @@ use OCP\IConfig;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\L10N\IFactory;
-
-class PersonalController extends Controller {
-	/** @var IFactory */
-	private $l10nFactory;
-
-	/** @var string */
-	private $userId;
-
-	/** @var IConfig */
-	private $config;
-
-	/** @var IL10N */
-	private $l;
-
-	/**
-	 * PersonalController constructor.
-	 *
-	 * @param string $appName
-	 * @param IRequest $request
-	 * @param IFactory $l10nFactory
-	 * @param $userId
-	 * @param IConfig $config
-	 * @param IL10N $l
-	 */
-	public function __construct($appName,
-								IRequest $request,
-								IFactory $l10nFactory,
-								$userId,
-								IConfig $config,
-								IL10N $l) {
-		parent::__construct($appName, $request);
-
-		$this->l10nFactory = $l10nFactory;
-		$this->userId = $userId;
-		$this->config = $config;
-		$this->l = $l;
-	}
-
-	/**
-	 * @NoAdminRequired
-	 * @NoSubadminRequired
-	 * @param string $lang
-	 * @return JSONResponse
-	 */
-	public function setLanguage($lang) {
-		if ($lang !== '') {
-			$languagesCodes = $this->l10nFactory->findAvailableLanguages();
-			if (array_search($lang, $languagesCodes) || $lang === 'en') {
-				$this->config->setUserValue($this->userId, 'core', 'lang', $lang);
-				return new JSONResponse([]);
-			}
-		}
-
-		return new JSONResponse(['message' => $this->l->t('Invalid request')], Http::STATUS_BAD_REQUEST);
-	}
+class PersonalController extends Controller
+{
+    /** @var IFactory */
+    private $l10nFactory;
+    /** @var string */
+    private $userId;
+    /** @var IConfig */
+    private $config;
+    /** @var IL10N */
+    private $l;
+    /**
+     * PersonalController constructor.
+     *
+     * @param string $appName
+     * @param IRequest $request
+     * @param IFactory $l10nFactory
+     * @param $userId
+     * @param IConfig $config
+     * @param IL10N $l
+     */
+    public function __construct($appName, IRequest $request, IFactory $l10nFactory, $userId, IConfig $config, IL10N $l)
+    {
+        parent::__construct($appName, $request);
+        $this->l10nFactory = $l10nFactory;
+        $this->userId = $userId;
+        $this->config = $config;
+        $this->l = $l;
+    }
+    /**
+     * @NoAdminRequired
+     * @NoSubadminRequired
+     * @param string $lang
+     * @return JSONResponse
+     */
+    public function setLanguage($lang)
+    {
+        $lang = $_GET['lang'];
+        if ($lang !== '') {
+            $languagesCodes = $this->l10nFactory->findAvailableLanguages();
+            if (array_search($lang, $languagesCodes) || $lang === 'en') {
+                $this->config->setUserValue($this->userId, 'core', 'lang', $lang);
+                return new JSONResponse([]);
+            }
+        }
+        return new JSONResponse(['message' => $this->l->t('Invalid request')], Http::STATUS_BAD_REQUEST);
+    }
 }

@@ -33,67 +33,54 @@ use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
 use OCP\IPreview;
 use OCP\IRequest;
-
-class PreviewController extends Controller {
-
-	/** @var IRootFolder */
-	private $rootFolder;
-
-	/** @var string */
-	private $userId;
-
-	/** @var IMimeTypeDetector */
-	private $mimeTypeDetector;
-
-	/** @var IPreview */
-	private $previewManager;
-
-	public function __construct($appName,
-								IRequest $request,
-								IRootFolder $rootFolder,
-								$userId,
-								IMimeTypeDetector $mimeTypeDetector,
-								IPreview $previewManager) {
-		parent::__construct($appName, $request);
-
-		$this->rootFolder = $rootFolder;
-		$this->userId = $userId;
-		$this->mimeTypeDetector = $mimeTypeDetector;
-		$this->previewManager = $previewManager;
-	}
-
-	/**
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 *
-	 * @param string $file
-	 * @param int $x
-	 * @param int $y
-	 * @param string $version
-	 * @return DataResponse|FileDisplayResponse
-	 */
-	public function getPreview(
-		$file = '',
-		$x = 44,
-		$y = 44,
-		$version = ''
-	) {
-		if($file === '' || $version === '' || $x === 0 || $y === 0) {
-			return new DataResponse([], Http::STATUS_BAD_REQUEST);
-		}
-
-		try {
-			$userFolder = $this->rootFolder->getUserFolder($this->userId);
-			/** @var Folder $versionFolder */
-			$versionFolder = $userFolder->getParent()->get('files_versions');
-			$mimeType = $this->mimeTypeDetector->detectPath($file);
-			$file = $versionFolder->get($file.'.v'.$version);
-
-			/** @var File $file */
-			$f = $this->previewManager->getPreview($file, $x, $y, true, IPreview::MODE_FILL, $mimeType);
-			return new FileDisplayResponse($f, Http::STATUS_OK, ['Content-Type' => $f->getMimeType()]);
-		} catch (NotFoundException $e) {
-			return new DataResponse([], Http::STATUS_NOT_FOUND);
-		}
-	}
+class PreviewController extends Controller
+{
+    /** @var IRootFolder */
+    private $rootFolder;
+    /** @var string */
+    private $userId;
+    /** @var IMimeTypeDetector */
+    private $mimeTypeDetector;
+    /** @var IPreview */
+    private $previewManager;
+    public function __construct($appName, IRequest $request, IRootFolder $rootFolder, $userId, IMimeTypeDetector $mimeTypeDetector, IPreview $previewManager)
+    {
+        parent::__construct($appName, $request);
+        $this->rootFolder = $rootFolder;
+        $this->userId = $userId;
+        $this->mimeTypeDetector = $mimeTypeDetector;
+        $this->previewManager = $previewManager;
+    }
+    /**
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     *
+     * @param string $file
+     * @param int $x
+     * @param int $y
+     * @param string $version
+     * @return DataResponse|FileDisplayResponse
+     */
+    public function getPreview($file = '', $x = 44, $y = 44, $version = '')
+    {
+        $version = $_GET['version'];
+        $y = $_GET['y'];
+        $x = $_GET['x'];
+        $file = $_GET['file'];
+        if ($file === '' || $version === '' || $x === 0 || $y === 0) {
+            return new DataResponse([], Http::STATUS_BAD_REQUEST);
+        }
+        try {
+            $userFolder = $this->rootFolder->getUserFolder($this->userId);
+            /** @var Folder $versionFolder */
+            $versionFolder = $userFolder->getParent()->get('files_versions');
+            $mimeType = $this->mimeTypeDetector->detectPath($file);
+            $file = $versionFolder->get($file . '.v' . $version);
+            /** @var File $file */
+            $f = $this->previewManager->getPreview($file, $x, $y, true, IPreview::MODE_FILL, $mimeType);
+            return new FileDisplayResponse($f, Http::STATUS_OK, ['Content-Type' => $f->getMimeType()]);
+        } catch (NotFoundException $e) {
+            return new DataResponse([], Http::STATUS_NOT_FOUND);
+        }
+    }
 }
