@@ -976,6 +976,6 @@ class FederatedShareProvider implements IShareProvider {
 		$remote = $cursor->fetch() !== false;
 		$cursor->closeCursor();
 
-		return ['users' => [], 'remote' => $remote, 'public' => false];
+		return ['remote' => $remote];
 	}
 }

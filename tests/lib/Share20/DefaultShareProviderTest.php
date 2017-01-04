@@ -2463,7 +2463,6 @@ class DefaultShareProviderTest extends \Test\TestCase {
 		$this->assertContains('testShare4', $result['users']);
 		$this->assertContains('testShare5', $result['users']);
 		$this->assertTrue($result['public']);
-		$this->assertFalse($result['remote']);
 
 		$provider->delete($share1);
 		$provider->delete($share2);
@@ -2550,7 +2549,6 @@ class DefaultShareProviderTest extends \Test\TestCase {
 		$this->assertContains('testShare3', $result['users']);
 		$this->assertContains('testShare5', $result['users']);
 		$this->assertTrue($result['public']);
-		$this->assertFalse($result['remote']);
 
 		$provider->delete($share1);
 		$provider->delete($share2);

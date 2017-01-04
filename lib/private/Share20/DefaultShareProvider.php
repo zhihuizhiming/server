@@ -1130,6 +1130,6 @@ class DefaultShareProvider implements IShareProvider {
 			return $count > 0;
 		});
 
-		return ['users' => array_keys($users), 'public' => $link, 'remote' => false];
+		return ['users' => array_keys($users), 'public' => $link];
 	}
 }
