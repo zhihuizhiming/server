@@ -76,7 +76,7 @@ class GroupPrincipalBackend implements BackendInterface {
 	 * @return array
 	 */
 	public function getPrincipalByPath($path) {
-		$elements = explode('/', $path);
+		$elements = explode('/', $path,  3);
 		if ($elements[0] !== 'principals') {
 			return null;
 		}
@@ -179,7 +179,7 @@ class GroupPrincipalBackend implements BackendInterface {
 	protected function groupToPrincipal($group) {
 		$groupId = $group->getGID();
 		$principal = [
-			'uri' => "principals/groups/$groupId",
+			'uri' => 'principals/groups/' . $groupId,
 			'{DAV:}displayname' => $groupId,
 		];
 
