@@ -38,6 +38,7 @@ use OCP\AppFramework\Http\RedirectResponse;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\Authentication\TwoFactorAuth\IProvider;
 use OCP\IConfig;
+use OCP\ILogger;
 use OCP\IRequest;
 use OCP\ISession;
 use OCP\IURLGenerator;
@@ -56,6 +57,8 @@ class LoginController extends Controller {
 	private $userSession;
 	/** @var IURLGenerator */
 	private $urlGenerator;
+	/** @var ILogger */
+	private $logger;
 	/** @var Manager */
 	private $twoFactorManager;
 	/** @var Throttler */
@@ -69,16 +72,18 @@ class LoginController extends Controller {
 	 * @param ISession $session
 	 * @param IUserSession $userSession
 	 * @param IURLGenerator $urlGenerator
+	 * @param ILogger $logger
 	 * @param Manager $twoFactorManager
 	 * @param Throttler $throttler
 	 */
-	function __construct($appName,
+	public function __construct($appName,
 						 IRequest $request,
 						 IUserManager $userManager,
 						 IConfig $config,
 						 ISession $session,
 						 IUserSession $userSession,
 						 IURLGenerator $urlGenerator,
+						 ILogger $logger,
 						 Manager $twoFactorManager,
 						 Throttler $throttler) {
 		parent::__construct($appName, $request);
@@ -87,6 +92,7 @@ class LoginController extends Controller {
 		$this->session = $session;
 		$this->userSession = $userSession;
 		$this->urlGenerator = $urlGenerator;
+		$this->logger = $logger;
 		$this->twoFactorManager = $twoFactorManager;
 		$this->throttler = $throttler;
 	}
@@ -228,6 +234,7 @@ class LoginController extends Controller {
 			}
 		}
 		if ($loginResult === false) {
+			$this->logger->warning('Login failed: \''. $user .'\' (Remote IP: \''. $this->request->getRemoteAddress(). '\')', ['app' => 'core']);
 			$this->throttler->registerAttempt('login', $this->request->getRemoteAddress(), ['user' => $originalUser]);
 			if($currentDelay === 0) {
 				$this->throttler->sleepDelay($this->request->getRemoteAddress());
@@ -301,6 +308,7 @@ class LoginController extends Controller {
 		$loginName = $this->userSession->getLoginName();
 		$loginResult = $this->userManager->checkPassword($loginName, $password);
 		if ($loginResult === false) {
+			$this->logger->warning('Login failed: \''. $user .'\' (Remote IP: \''. $this->request->getRemoteAddress(). '\')', ['app' => 'core']);
 			$this->throttler->registerAttempt('sudo', $this->request->getRemoteAddress(), ['user' => $loginName]);
 			if ($currentDelay === 0) {
 				$this->throttler->sleepDelay($this->request->getRemoteAddress());

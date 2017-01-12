@@ -187,7 +187,7 @@ class Manager extends PublicEmitter implements IUserManager {
 	public function checkPassword($loginName, $password) {
 		$loginName = str_replace("\0", '', $loginName);
 		$password = str_replace("\0", '', $password);
-		
+
 		foreach ($this->backends as $backend) {
 			if ($backend->implementsActions(Backend::CHECK_PASSWORD)) {
 				$uid = $backend->checkPassword($loginName, $password);
@@ -196,8 +196,6 @@ class Manager extends PublicEmitter implements IUserManager {
 				}
 			}
 		}
-
-		\OC::$server->getLogger()->warning('Login failed: \''. $loginName .'\' (Remote IP: \''. \OC::$server->getRequest()->getRemoteAddress(). '\')', ['app' => 'core']);
 		return false;
 	}
 
