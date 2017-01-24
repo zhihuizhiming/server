@@ -71,6 +71,13 @@
 						autocomplete="off" tabindex="5">
 					<button class="icon-close-white" type="reset"></button>
 				</form>
+				<div style="position: relative">
+					<div id="contactsmenu-trigger"
+						 class="icon-contacts-dark"></div>
+						<div id="contactsmenu-menu"
+							 class="popovermenu bubble menu">
+						</div>
+				</div>
 				<div id="settings">
 					<div id="expand" tabindex="6" role="link" class="menutoggle">
 						<div class="avatardiv<?php if ($_['userAvatarSet']) { print_unescaped(' avatardiv-shown'); } else { print_unescaped('" style="display: none'); } ?>">
@@ -161,5 +168,14 @@
 				<?php print_unescaped($_['content']); ?>
 			</div>
 		</div>
+
+		<script nonce="<?php p(\OC::$server->getContentSecurityPolicyNonceManager()->getNonce()) ?>" type="text/javascript">
+				$(function() {
+					new OC.ContactsMenu({
+						el: $('#contactsmenu-menu'),
+						trigger: $('#contactsmenu-trigger')
+					});
+				});
+		</script>
 	</body>
 </html>
