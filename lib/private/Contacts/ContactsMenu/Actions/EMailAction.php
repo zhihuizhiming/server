@@ -22,39 +22,51 @@
  *
  */
 
-namespace OC\Core\Controller;
+namespace OC\Contacts\ContactsMenu\Actions;
 
-use OC\Contacts\ContactsMenu\Manager;
-use OCP\AppFramework\Controller;
-use OCP\AppFramework\Http\JSONResponse;
-use OCP\IRequest;
+use OCP\Contacts\ContactsMenu\ILinkAction;
 
-class ContactsMenuController extends Controller {
-
-	/** @var Manager */
-	private $manager;
+class EMailAction implements ILinkAction {
 
 	/** @var string */
-	private $userId;
+	private $icon;
+
+	/** @var string */
+	private $name;
+
+	/** @var string */
+	private $href;
 
 	/**
-	 * @param IRequest $request
-	 * @param string $UserId
+	 * @param string $icon absolute URI to an icon
 	 */
-	public function __construct(IRequest $request, $UserId, Manager $manager) {
-		parent::__construct('core', $request);
-		$this->userId = $UserId;
-		$this->manager = $manager;
+	public function setIcon($icon) {
+		$this->icon = $icon;
 	}
 
 	/**
-	 * @NoAdminRequired
-	 *
-	 * @param int $page
-	 * @return JSONResponse
+	 * @param string $name
 	 */
-	public function index($page = 0) {
-		return $this->manager->getEntries($this->userId);
+	public function setName($name) {
+		$this->name = $name;
+	}
+
+	/**
+	 * @param string $href
+	 */
+	public function setHref($href) {
+		$this->href = $href;
+	}
+
+	/**
+	 * @return array
+	 */
+	public function jsonSerialize() {
+		return [
+			'title' => $this->name,
+			'icon' => $this->icon,
+			'hyperlink' => $this->href,
+		];
 	}
 
 }

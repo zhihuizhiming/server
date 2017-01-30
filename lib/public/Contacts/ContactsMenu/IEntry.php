@@ -22,39 +22,27 @@
  *
  */
 
-namespace OC\Core\Controller;
+namespace OCP\Contacts\ContactsMenu;
 
-use OC\Contacts\ContactsMenu\Manager;
-use OCP\AppFramework\Controller;
-use OCP\AppFramework\Http\JSONResponse;
-use OCP\IRequest;
+use JsonSerializable;
 
-class ContactsMenuController extends Controller {
-
-	/** @var Manager */
-	private $manager;
-
-	/** @var string */
-	private $userId;
+/**
+ * @since 12.0
+ */
+interface IEntry extends JsonSerializable {
 
 	/**
-	 * @param IRequest $request
-	 * @param string $UserId
+	 * @return string
 	 */
-	public function __construct(IRequest $request, $UserId, Manager $manager) {
-		parent::__construct('core', $request);
-		$this->userId = $UserId;
-		$this->manager = $manager;
-	}
+	public function getFullName();
 
 	/**
-	 * @NoAdminRequired
-	 *
-	 * @param int $page
-	 * @return JSONResponse
+	 * @return string[]
 	 */
-	public function index($page = 0) {
-		return $this->manager->getEntries($this->userId);
-	}
+	public function getEMailAddresses();
 
+	/**
+	 * @param IAction $action an action to show in the contacts menu
+	 */
+	public function addAction(IAction $action);
 }

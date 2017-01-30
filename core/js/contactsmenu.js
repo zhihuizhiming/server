@@ -26,17 +26,21 @@
 	'use strict';
 
 	var LOADING_TEMPLATE = '<div class="icon-loading"></div>';
+	var CONTENT_TEMPLATE = '<div>'
+			+ '    <input id="contactsmenu-search" type="search" placeholder="Search contacts …">'
+			+ '    <div id="contactsmenu-contacts"></div>'
+			+ '</div>';
 	var CONTACT_TEMPLATE = '<div class="avatar"></div>'
 			+ '<div class="body">'
-			+ '    <div>{{contact.displayName}}</div>'
+			+ '    <div class="full-name">{{contact.fullName}}</div>'
 			+ '    <div class="last-message">{{contact.lastMessage}}</div>'
 			+ '</div>'
-			+ '<span class="top-action {{contact.topAction.icon}}"></span>'
+			+ '<a class="top-action {{contact.topAction.icon}}" href="{{contact.topAction.hyperlink}}"></a>'
 			+ '<span class="other-actions icon-more"></span>'
 			+ '<div class="popovermenu bubble menu">'
 			+ '    <ul>'
 			+ '        {{#each contact.actions}}'
-			+ '        <li><span class="{{icon}}">{{title}}</span></li>'
+			+ '        <li><span class="{{icon}}"><a href="{{hyperlink}}">{{title}}</a></span></li>'
 			+ '        {{/each}}'
 			+ '        <li><span class="icon-info"><a href="/apps/contacts/#uri">Details</a></span></li>'
 			+ '    </ul>'
@@ -47,7 +51,7 @@
 	 */
 	var Contact = OC.Backbone.Model.extend({
 		defaults: {
-			displayName: '',
+			fullName: '',
 			lastMessage: '',
 			actions: []
 		}
@@ -81,7 +85,6 @@
 		 */
 		render: function() {
 			var self = this;
-			console.log('render contacts list', self._collection);
 			self.$el.html('');
 
 			self._collection.forEach(function(contact) {
@@ -142,7 +145,7 @@
 			}));
 			this.delegateEvents();
 
-			this.$('.avatar').imageplaceholder(this._model.get('displayName', 'displayName'));
+			this.$('.avatar').imageplaceholder(this._model.get('fullName'));
 
 			return this;
 		},
@@ -158,17 +161,35 @@
 	var ContactsMenuView = OC.Backbone.View.extend({
 
 		/** @type {undefined|function} */
-		_template: undefined,
+		_loadingTemplate: undefined,
+
+		/** @type {undefined|function} */
+		_contentTemplate: undefined,
+
+		events: {
+			'keyup #contactsmenu-search': '_onSearch'
+		},
 
 		/**
 		 * @param {object} data
-		 * @returns {undefined}
+		 * @returns {string}
 		 */
-		template: function(data) {
-			if (!this._template) {
-				this._template = Handlebars.compile(LOADING_TEMPLATE);
+		loadingTemplate: function(data) {
+			if (!this._loadingTemplate) {
+				this._loadingTemplate = Handlebars.compile(LOADING_TEMPLATE);
 			}
-			return this._template(data);
+			return this._loadingTemplate(data);
+		},
+
+		/**
+		 * @param {object} data
+		 * @returns {string}
+		 */
+		contentTemplate: function(data) {
+			if (!this._contentTemplate) {
+				this._contentTemplate = Handlebars.compile(CONTENT_TEMPLATE);
+			}
+			return this._contentTemplate(data);
 		},
 
 		/**
@@ -205,16 +226,27 @@
 		 */
 		render: function(data) {
 			if (!!data.loading) {
-				this.$el.html(this.template(data));
+				this.$el.html(this.loadingTemplate(data));
 			} else {
 				var list = new ContactsListView({
 					collection: data.contacts
 				});
 				list.render();
-				this.$el.html(list.$el);
+				this.$el.html(this.contentTemplate(data));
+				this.$('#contactsmenu-contacts').html(list.$el);
+
+				// Focus search
+				this.$('#contactsmenu-search').focus();
 			}
 
 			return this;
+		},
+
+		/**
+		 * @returns {undefined}
+		 */
+		_onSearch: function() {
+			console.info('searching …', this.$('#contactsmenu-search').val());
 		}
 
 	});
@@ -299,6 +331,10 @@
 				self._view.showContacts(contacts);
 			}, function(e) {
 				console.error('could not load contacts', e);
+			}).then(function() {
+				// Delete promise, so that contactes are fetched again when the
+				// menu is opened the next time.
+				delete self._contactsPromise;
 			});
 		}
 	};

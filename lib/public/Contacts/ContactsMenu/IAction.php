@@ -22,39 +22,22 @@
  *
  */
 
-namespace OC\Core\Controller;
+namespace OCP\Contacts\ContactsMenu;
 
-use OC\Contacts\ContactsMenu\Manager;
-use OCP\AppFramework\Controller;
-use OCP\AppFramework\Http\JSONResponse;
-use OCP\IRequest;
+use JsonSerializable;
 
-class ContactsMenuController extends Controller {
-
-	/** @var Manager */
-	private $manager;
-
-	/** @var string */
-	private $userId;
+/**
+ * @since 12.0
+ */
+interface IAction extends JsonSerializable {
 
 	/**
-	 * @param IRequest $request
-	 * @param string $UserId
+	 * @param string $icon absolute URI to an icon
 	 */
-	public function __construct(IRequest $request, $UserId, Manager $manager) {
-		parent::__construct('core', $request);
-		$this->userId = $UserId;
-		$this->manager = $manager;
-	}
+	public function setIcon($icon);
 
 	/**
-	 * @NoAdminRequired
-	 *
-	 * @param int $page
-	 * @return JSONResponse
+	 * @param string $name localized action name, e.g. 'Call'
 	 */
-	public function index($page = 0) {
-		return $this->manager->getEntries($this->userId);
-	}
-
+	public function setName($name);
 }

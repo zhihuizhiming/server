@@ -22,39 +22,15 @@
  *
  */
 
-namespace OC\Core\Controller;
+namespace OCP\Contacts\ContactsMenu;
 
-use OC\Contacts\ContactsMenu\Manager;
-use OCP\AppFramework\Controller;
-use OCP\AppFramework\Http\JSONResponse;
-use OCP\IRequest;
-
-class ContactsMenuController extends Controller {
-
-	/** @var Manager */
-	private $manager;
-
-	/** @var string */
-	private $userId;
+/**
+ * @since 12.0
+ */
+interface ILinkAction extends IAction {
 
 	/**
-	 * @param IRequest $request
-	 * @param string $UserId
+	 * @param string $href the target URL of the action
 	 */
-	public function __construct(IRequest $request, $UserId, Manager $manager) {
-		parent::__construct('core', $request);
-		$this->userId = $UserId;
-		$this->manager = $manager;
-	}
-
-	/**
-	 * @NoAdminRequired
-	 *
-	 * @param int $page
-	 * @return JSONResponse
-	 */
-	public function index($page = 0) {
-		return $this->manager->getEntries($this->userId);
-	}
-
+	public function setHref($href);
 }
