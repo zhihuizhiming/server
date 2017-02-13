@@ -1102,8 +1102,22 @@ span.ui-icon {
 	right: -16px;
 	width: 350px;
 
-	div.icon-loading {
-		height: 200px;
+	div.emptycontent {
+		margin-top: 25vh;
+		margin-bottom: 5vh;
+		.icon-loading {
+			position: inherit;
+		}
+	}
+
+	div.content {
+		max-height: 300px;
+		overflow-y: auto;
+
+		.footer {
+			text-align: center;
+			line-height: 50px;
+		}
 	}
 
 	div.contact {

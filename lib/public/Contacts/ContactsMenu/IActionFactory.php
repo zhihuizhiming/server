@@ -2,7 +2,6 @@
 
 /**
  * @copyright 2017 Christoph Wurst <christoph@winzerhof-wurst.at>
- *
  * @author 2017 Christoph Wurst <christoph@winzerhof-wurst.at>
  *
  * @license GNU AGPL version 3 or any later version
@@ -24,33 +23,32 @@
 
 namespace OCP\Contacts\ContactsMenu;
 
-use JsonSerializable;
-
 /**
  * @since 12.0
  */
-interface IEntry extends JsonSerializable {
+interface IActionFactory {
 
 	/**
-	 * @return string
-	 */
-	public function getFullName();
-
-	/**
-	 * @return string[]
-	 */
-	public function getEMailAddresses();
-
-	/**
-	 * @param IAction $action an action to show in the contacts menu
-	 */
-	public function addAction(IAction $action);
-
-	/**
-	 * Get an arbitrary property from the contact
+	 * Construct and return a new link action for the contacts menu
 	 *
-	 * @param string $key
-	 * @return mixed the value of the property or null
+	 * @since 12.0
+	 *
+	 * @param string $icon full path to the action's icon
+	 * @param string $name localized name of the action
+	 * @param string $href target URL
+	 * @return ILinkAction
 	 */
-	public function getProperty($key);
+	public function newLinkAction($icon, $name, $href);
+
+	/**
+	 * Construct and return a new email action for the contacts menu
+	 *
+	 * @since 12.0
+	 *
+	 * @param string $icon full path to the action's icon
+	 * @param string $name localized name of the action
+	 * @param string $email target e-mail address
+	 * @return ILinkAction
+	 */
+	public function newEMailAction($icon, $name, $email);
 }

@@ -24,7 +24,6 @@
 
 namespace OC\Contacts\ContactsMenu;
 
-use Exception;
 use OCP\Contacts\ContactsMenu\IEntry;
 use OCP\Contacts\IManager;
 
@@ -74,6 +73,10 @@ class ContactsStore {
 				$entry->addEMailAddress($email);
 			}
 		}
+
+		// Attach all other properties to the entry too becuase some
+		// providers might make use of it.
+		$entry->setProperties($contact);
 
 		return $entry;
 	}

@@ -22,35 +22,35 @@
  *
  */
 
-namespace OCP\Contacts\ContactsMenu;
+namespace OC\Contacts\ContactsMenu;
 
-use JsonSerializable;
+use OC\Contacts\ContactsMenu\Actions\LinkAction;
+use OCP\Contacts\ContactsMenu\IActionFactory;
 
-/**
- * @since 12.0
- */
-interface IEntry extends JsonSerializable {
+class ActionFactory implements IActionFactory {
 
 	/**
-	 * @return string
+	 * @param string $icon
+	 * @param string $name
+	 * @param string $href
+	 * @return LinkAction
 	 */
-	public function getFullName();
+	public function newLinkAction($icon, $name, $href) {
+		$action = new LinkAction();
+		$action->setName($name);
+		$action->setIcon($icon);
+		$action->setHref($href);
+		return $action;
+	}
 
 	/**
-	 * @return string[]
+	 * @param string $icon
+	 * @param string $name
+	 * @param string $email
+	 * @return LinkAction
 	 */
-	public function getEMailAddresses();
+	public function newEMailAction($icon, $name, $email) {
+		return $this->newLinkAction($icon, $name, 'mailto:' . urlencode($email));
+	}
 
-	/**
-	 * @param IAction $action an action to show in the contacts menu
-	 */
-	public function addAction(IAction $action);
-
-	/**
-	 * Get an arbitrary property from the contact
-	 *
-	 * @param string $key
-	 * @return mixed the value of the property or null
-	 */
-	public function getProperty($key);
 }

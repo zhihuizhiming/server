@@ -24,7 +24,9 @@
 
 namespace OC\Contacts\ContactsMenu;
 
+use OCP\App\IAppManager;
 use OCP\Contacts\ContactsMenu\IEntry;
+use OCP\IURLGenerator;
 
 class Manager {
 
@@ -34,26 +36,53 @@ class Manager {
 	/** @var ActionProviderStore */
 	private $actionProviderStore;
 
+	/** @var IAppManager */
+	private $appManager;
+
+	/** @var IURLGenerator */
+	private $urlGenerator;
+
 	/**
 	 * @param ContactsStore $store
 	 * @param ActionProviderStore $actionProviderStore
+	 * @param IAppManager $appManager
 	 */
-	public function __construct(ContactsStore $store, ActionProviderStore $actionProviderStore) {
+	public function __construct(ContactsStore $store, ActionProviderStore $actionProviderStore, IAppManager $appManager, IURLGenerator $urlGenerator) {
 		$this->store = $store;
 		$this->actionProviderStore = $actionProviderStore;
+		$this->appManager = $appManager;
+		$this->urlGenerator = $urlGenerator;
 	}
 
 	/**
 	 * @param string $userId
 	 * @param string $filter
-	 * @return IEntry[]
+	 * @return array
 	 */
 	public function getEntries($userId, $filter) {
-		// TODO: contacts manager does not need a user id
 		$entries = $this->store->getContacts($filter);
 
-		$this->processEntries($entries);
+		$sortedEntries = $this->sortEntries($entries);
+		$topEntries = array_slice($sortedEntries, 0, 25);
+		$this->processEntries($topEntries);
 
+		$contactsEnabled = $this->appManager->isEnabledForUser('contacts', $userId);
+		$contactsURL = $this->urlGenerator->getAbsoluteURL('/apps/contacts');
+		return [
+			'contacts' => $topEntries,
+			'contactsAppEnabled' => $contactsEnabled,
+			'contactsAppURL' => $contactsURL,
+		];
+	}
+
+	/**
+	 * @param IEntry[] $entries
+	 * @return IEntry[]
+	 */
+	private function sortEntries(array $entries) {
+		usort($entries, function(IEntry $entryA, IEntry $entryB) {
+			return strcasecmp($entryA->getFullName(), $entryB->getFullName());
+		});
 		return $entries;
 	}
 

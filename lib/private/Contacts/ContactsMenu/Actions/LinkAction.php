@@ -26,7 +26,7 @@ namespace OC\Contacts\ContactsMenu\Actions;
 
 use OCP\Contacts\ContactsMenu\ILinkAction;
 
-class EMailAction implements ILinkAction {
+class LinkAction implements ILinkAction {
 
 	/** @var string */
 	private $icon;
@@ -36,6 +36,9 @@ class EMailAction implements ILinkAction {
 
 	/** @var string */
 	private $href;
+
+	/** @var int */
+	private $priority = 10;
 
 	/**
 	 * @param string $icon absolute URI to an icon
@@ -49,6 +52,27 @@ class EMailAction implements ILinkAction {
 	 */
 	public function setName($name) {
 		$this->name = $name;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() {
+		return $this->name;
+	}
+
+	/**
+	 * @param int $priority
+	 */
+	public function setPriority($priority) {
+		$this->priority = $priority;
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getPriority() {
+		return $this->priority;
 	}
 
 	/**

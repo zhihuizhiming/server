@@ -27,6 +27,8 @@ namespace OCP\Contacts\ContactsMenu;
 use JsonSerializable;
 
 /**
+ * Apps should use the IActionFactory to create new action objects
+ *
  * @since 12.0
  */
 interface IAction extends JsonSerializable {
@@ -37,7 +39,22 @@ interface IAction extends JsonSerializable {
 	public function setIcon($icon);
 
 	/**
+	 * @return string localized action name, e.g. 'Call'
+	 */
+	public function getName();
+
+	/**
 	 * @param string $name localized action name, e.g. 'Call'
 	 */
 	public function setName($name);
+
+	/**
+	 * @param int $priority priorize actions, high order ones are shown on top
+	 */
+	public function setPriority($priority);
+
+	/**
+	 * @return int priority to priorize actions, high order ones are shown on top
+	 */
+	public function getPriority();
 }

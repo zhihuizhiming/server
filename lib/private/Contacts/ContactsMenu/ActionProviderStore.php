@@ -24,22 +24,27 @@
 
 namespace OC\Contacts\ContactsMenu;
 
+use OC\Contacts\ContactsMenu\Providers\DetailsProvider;
 use OC\Contacts\ContactsMenu\Providers\EMailProvider;
 use OCP\AppFramework\QueryException;
 use OCP\Contacts\ContactsMenu\IProvider;
+use OCP\ILogger;
 use OCP\IServerContainer;
-use SebastianBergmann\RecursionContext\Exception;
 
 class ActionProviderStore {
 
 	/** @var IServerContainer */
 	private $serverContainer;
 
+	/** @var ILogger */
+	private $logger;
+
 	/**
 	 * @param IServerContainer $serverContainer
 	 */
-	public function __construct(IServerContainer $serverContainer) {
+	public function __construct(IServerContainer $serverContainer, ILogger $logger) {
 		$this->serverContainer = $serverContainer;
+		$this->logger = $logger;
 	}
 
 	/**
@@ -55,7 +60,11 @@ class ActionProviderStore {
 			try {
 				$providers[] = $this->serverContainer->query($class);
 			} catch (QueryException $ex) {
-				throw new Exception("Could not load contacts menu action provider $class");
+				$this->logger->logException($ex, [
+					'message' => "Could not load contacts menu action provider $class",
+					'app' => 'core',
+				]);
+				throw new \Exception("Could not load contacts menu action provider $class");
 			}
 		}
 
@@ -68,6 +77,7 @@ class ActionProviderStore {
 	private function getServerProviderClasses() {
 		return [
 			EMailProvider::class,
+			DetailsProvider::class,
 		];
 	}
 

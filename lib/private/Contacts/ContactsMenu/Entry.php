@@ -41,6 +41,9 @@ class Entry implements IEntry {
 	/** @var IAction[] */
 	private $actions = [];
 
+	/** @var array */
+	private $properties = [];
+
 	/**
 	 * @param string $id
 	 */
@@ -81,6 +84,25 @@ class Entry implements IEntry {
 	 */
 	public function addAction(IAction $action) {
 		$this->actions[] = $action;
+		$this->sortActions();
+	}
+
+	/**
+	 * sort the actions by priority and name
+	 */
+	private function sortActions() {
+		usort($this->actions, function(IAction $action1, IAction $action2) {
+			$prio1 = $action1->getPriority();
+			$prio2 = $action2->getPriority();
+
+			if ($prio1 === $prio2) {
+				// Ascending order for same priority
+				return strcasecmp($action1->getName(), $action2->getName());
+			}
+
+			// Descending order when priority differs
+			return $prio2 - $prio1;
+		});
 	}
 
 	/**
@@ -99,6 +121,24 @@ class Entry implements IEntry {
 			'actions' => $otherActions,
 			'lastMessage' => '',
 		];
+	}
+
+	/**
+	 * @param array $contact key-value array containing additional properties
+	 */
+	public function setProperties(array $contact) {
+		$this->properties = $contact;
+	}
+
+	/**
+	 * @param string $key
+	 * @return mixed
+	 */
+	public function getProperty($key) {
+		if (!isset($this->properties[$key])) {
+			return null;
+		}
+		return $this->properties[$key];
 	}
 
 }

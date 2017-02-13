@@ -27,30 +27,45 @@ namespace OC\Contacts\ContactsMenu\Providers;
 use OCP\Contacts\ContactsMenu\IActionFactory;
 use OCP\Contacts\ContactsMenu\IEntry;
 use OCP\Contacts\ContactsMenu\IProvider;
+use OCP\IURLGenerator;
 
-class EMailProvider implements IProvider {
+/**
+ * @todo move to contacts app
+ */
+class DetailsProvider implements IProvider {
+
+	/** @var IURLGenerator */
+	private $urlGenerator;
 
 	/** @var IActionFactory */
 	private $actionFactory;
 
 	/**
+	 * @param IURLGenerator $urlGenerator
 	 * @param IActionFactory $actionFactory
 	 */
-	public function __construct(IActionFactory $actionFactory) {
+	public function __construct(IURLGenerator $urlGenerator, IActionFactory $actionFactory) {
 		$this->actionFactory = $actionFactory;
+		$this->urlGenerator = $urlGenerator;
 	}
 
 	/**
 	 * @param IEntry $entry
 	 */
 	public function process(IEntry $entry) {
-		foreach ($entry->getEMailAddresses() as $address) {
-			// TODO: absolute path
-			// TODO: meaningful URL
-			// TODO: l10n
-			$action = $this->actionFactory->newEMailAction('icon-mail', 'Mail', $address);
-			$entry->addAction($action);
+		$uid = $entry->getProperty('UID');
+
+		if (is_null($uid)) {
+			// Nothing to do
+			return;
 		}
+
+		// TODO: unique contact URL to the contacts app
+		// TODO: l10n
+		$contactsUrl = $this->urlGenerator->getAbsoluteURL('/apps/contacts');
+		$action = $this->actionFactory->newLinkAction('icon-info', 'Details', $contactsUrl);
+		$action->setPriority(0);
+		$entry->addAction($action);
 	}
 
 }

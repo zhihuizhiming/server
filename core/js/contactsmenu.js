@@ -25,26 +25,39 @@
 (function(OC, $, _, Handlebars) {
 	'use strict';
 
-	var LOADING_TEMPLATE = '<div class="icon-loading"></div>';
-	var CONTENT_TEMPLATE = '<div>'
-			+ '    <input id="contactsmenu-search" type="search" placeholder="Search contacts …">'
-			+ '    <div id="contactsmenu-contacts"></div>'
+	var LOADING_TEMPLATE = ''
+			+ '<div class="emptycontent">'
+			+ '    <a class="icon-loading"></a>'
+			+ '    <h2>{{loadingText}}</h2>'
 			+ '</div>';
-	var CONTACT_TEMPLATE = '<div class="avatar"></div>'
+	var ERROR_TEMPLATE = ''
+			+ '<div class="emptycontent">'
+			+ '    <h2>' + t('core', 'Could not load your contacts.') + '</h2>'
+			+ '</div>';
+	var CONTENT_TEMPLATE = ''
+			+ '<input id="contactsmenu-search" type="search" placeholder="Search contacts …" value="{{searchTerm}}">'
+			+ '<div class="content">'
+			+ '    {{#unless contacts.length}}<div class="emptycontent">' + t('core', 'No contacts found.') + '</div>{{/unless}}'
+			+ '    <div id="contactsmenu-contacts"></div>'
+			+ '    {{#if contactsAppEnabled}}<div class="footer"><a href="{{contactsAppURL}}">' + t('core', 'Show all contacts …') + '</a></div>{{/if}}'
+			+ '</div>';
+	var CONTACT_TEMPLATE = ''
+			+ '<div class="avatar"></div>'
 			+ '<div class="body">'
 			+ '    <div class="full-name">{{contact.fullName}}</div>'
 			+ '    <div class="last-message">{{contact.lastMessage}}</div>'
 			+ '</div>'
 			+ '<a class="top-action {{contact.topAction.icon}}" href="{{contact.topAction.hyperlink}}"></a>'
-			+ '<span class="other-actions icon-more"></span>'
-			+ '<div class="popovermenu bubble menu">'
-			+ '    <ul>'
-			+ '        {{#each contact.actions}}'
-			+ '        <li><span class="{{icon}}"><a href="{{hyperlink}}">{{title}}</a></span></li>'
-			+ '        {{/each}}'
-			+ '        <li><span class="icon-info"><a href="/apps/contacts/#uri">Details</a></span></li>'
-			+ '    </ul>'
-			+ '</div>';
+			+ '{{#if contact.actions.length}}'
+			+ '    <span class="other-actions icon-more"></span>'
+			+ '    <div class="popovermenu bubble menu">'
+			+ '        <ul>'
+			+ '            {{#each contact.actions}}'
+			+ '            <li><span class="{{icon}}"><a href="{{hyperlink}}">{{title}}</a></span></li>'
+			+ '            {{/each}}'
+			+ '        </ul>'
+			+ '    </div>'
+			+ '{{/if}}';
 
 	/**
 	 * @class Contact
@@ -164,6 +177,9 @@
 		_loadingTemplate: undefined,
 
 		/** @type {undefined|function} */
+		_errorTemplate: undefined,
+
+		/** @type {undefined|function} */
 		_contentTemplate: undefined,
 
 		/** @type {undefined|ContactCollection} */
@@ -192,6 +208,17 @@
 		 * @param {object} data
 		 * @returns {string}
 		 */
+		errorTemplate: function(data) {
+			if (!this._errorTemplate) {
+				this._errorTemplate = Handlebars.compile(ERROR_TEMPLATE);
+			}
+			return this._errorTemplate(data);
+		},
+
+		/**
+		 * @param {object} data
+		 * @returns {string}
+		 */
 		contentTemplate: function(data) {
 			if (!this._contentTemplate) {
 				this._contentTemplate = Handlebars.compile(CONTENT_TEMPLATE);
@@ -208,24 +235,40 @@
 		},
 
 		/**
+		 * @param {string} text
 		 * @returns {undefined}
 		 */
-		showLoading: function() {
+		showLoading: function(text) {
 			this._contacts = undefined;
 			this.render({
-				loading: true
+				loading: true,
+				loadingText: text
+			});
+		},
+
+		/**
+		 * @returns {undefined}
+		 */
+		showError: function() {
+			this._contacts = undefined;
+			this.render({
+				error: true
 			});
 		},
 
 		/**
 		 * @param {Backbone.Collection} contacts
+		 * @param {string} searchTerm
 		 * @returns {undefined}
 		 */
-		showContacts: function(contacts) {
-			this._contacts = contacts;
+		showContacts: function(viewData, searchTerm) {
+			this._contacts = viewData.contacts;
 			this.render({
 				loading: false,
-				contacts: contacts
+				searchTerm: searchTerm,
+				contacts: viewData.contacts,
+				contactsAppEnabled: viewData.contactsAppEnabled,
+				contactsAppURL: viewData.contactsAppURL
 			});
 		},
 
@@ -234,19 +277,24 @@
 		 * @returns {self}
 		 */
 		render: function(data) {
+			if (!!data.error) {
+				this.$el.html(this.errorTemplate(data));
+				return this;
+			}
 			if (!!data.loading) {
 				this.$el.html(this.loadingTemplate(data));
-			} else {
-				var list = new ContactsListView({
-					collection: data.contacts
-				});
-				list.render();
-				this.$el.html(this.contentTemplate(data));
-				this.$('#contactsmenu-contacts').html(list.$el);
-
-				// Focus search
-				this.$('#contactsmenu-search').focus();
+				return this;
 			}
+
+			var list = new ContactsListView({
+				collection: data.contacts
+			});
+			list.render();
+			this.$el.html(this.contentTemplate(data));
+			this.$('#contactsmenu-contacts').html(list.$el);
+
+			// Focus search
+			this.$('#contactsmenu-search').focus();
 
 			return this;
 		},
@@ -322,8 +370,9 @@
 					filter: searchTerm
 				}
 			})).then(function(data) {
-				// Convert to Backbone collection
-				return new ContactCollection(data);
+				// Convert contact entries to Backbone collection
+				data.contacts = new ContactCollection(data.contacts);
+				return data;
 			});
 		},
 
@@ -334,13 +383,20 @@
 				self._contactsPromise = self._getContacts(searchTerm);
 			}
 
-			self._view.showLoading();
+			if (_.isUndefined(searchTerm) || searchTerm === '') {
+				self._view.showLoading(t('core', 'Loading your contacts …'));
+			} else {
+				self._view.showLoading(t('core', 'Looking for {term} …', {
+					term: searchTerm
+				}));
+			}
 			self._contactsPromise.then(function(contacts) {
-				self._view.showContacts(contacts);
+				self._view.showContacts(contacts, searchTerm);
 			}, function(e) {
+				self._view.showError();
 				console.error('could not load contacts', e);
 			}).then(function() {
-				// Delete promise, so that contactes are fetched again when the
+				// Delete promise, so that contacts are fetched again when the
 				// menu is opened the next time.
 				delete self._contactsPromise;
 			});
