@@ -41,10 +41,13 @@ class ContactsStore {
 	}
 
 	/**
+	 * @param string|null $filter
 	 * @return IEntry[]
 	 */
-	public function getContacts() {
-		$allContacts = $this->manager->search('*');
+	public function getContacts($filter) {
+		$allContacts = $this->manager->search($filter ?: '', [
+			'FN',
+		]);
 
 		return array_map(function(array $contact) {
 			return $this->contactArrayToEntry($contact);
@@ -73,14 +76,6 @@ class ContactsStore {
 		}
 
 		return $entry;
-	}
-
-	/**
-	 * @param string $term
-	 * @return IEntry[]
-	 */
-	public function searchContacts($term) {
-		throw new Exception('not implemented yet');
 	}
 
 }

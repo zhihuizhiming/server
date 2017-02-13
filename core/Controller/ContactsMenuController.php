@@ -50,11 +50,11 @@ class ContactsMenuController extends Controller {
 	/**
 	 * @NoAdminRequired
 	 *
-	 * @param int $page
+	 * @param string|null filter
 	 * @return JSONResponse
 	 */
-	public function index($page = 0) {
-		return $this->manager->getEntries($this->userId);
+	public function index($filter = null) {
+		return $this->manager->getEntries($this->userId, $filter);
 	}
 
 }

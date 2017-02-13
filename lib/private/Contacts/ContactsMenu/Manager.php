@@ -45,11 +45,12 @@ class Manager {
 
 	/**
 	 * @param string $userId
+	 * @param string $filter
 	 * @return IEntry[]
 	 */
-	public function getEntries($userId) {
+	public function getEntries($userId, $filter) {
 		// TODO: contacts manager does not need a user id
-		$entries = $this->store->getContacts();
+		$entries = $this->store->getContacts($filter);
 
 		$this->processEntries($entries);
 

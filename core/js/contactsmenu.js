@@ -1,4 +1,4 @@
-/* global OC.Backbone, Handlebars, Promise */
+/* global OC.Backbone, Handlebars, Promise, _ */
 
 /**
  * @copyright 2017 Christoph Wurst <christoph@winzerhof-wurst.at>
@@ -22,7 +22,7 @@
  *
  */
 
-(function(OC, $, Handlebars) {
+(function(OC, $, _, Handlebars) {
 	'use strict';
 
 	var LOADING_TEMPLATE = '<div class="icon-loading"></div>';
@@ -166,6 +166,13 @@
 		/** @type {undefined|function} */
 		_contentTemplate: undefined,
 
+		/** @type {undefined|ContactCollection} */
+		_contacts: undefined,
+
+		_onSearch: _.debounce(function() {
+			this.trigger('search', this.$('#contactsmenu-search').val());
+		}, 700),
+
 		events: {
 			'keyup #contactsmenu-search': '_onSearch'
 		},
@@ -204,6 +211,7 @@
 		 * @returns {undefined}
 		 */
 		showLoading: function() {
+			this._contacts = undefined;
 			this.render({
 				loading: true
 			});
@@ -214,6 +222,7 @@
 		 * @returns {undefined}
 		 */
 		showContacts: function(contacts) {
+			this._contacts = contacts;
 			this.render({
 				loading: false,
 				contacts: contacts
@@ -241,13 +250,6 @@
 
 			return this;
 		},
-
-		/**
-		 * @returns {undefined}
-		 */
-		_onSearch: function() {
-			console.info('searching …', this.$('#contactsmenu-search').val());
-		}
 
 	});
 
@@ -288,6 +290,9 @@
 			this._view = new ContactsMenuView({
 				el: self.$el
 			});
+			this._view.on('search', function(searchTerm) {
+				self._loadContacts(searchTerm);
+			});
 
 			this._$trigger.click(function(event) {
 				event.preventDefault();
@@ -309,21 +314,24 @@
 			}
 		},
 
-		_getContats: function() {
+		_getContacts: function(searchTerm) {
 			var url = OC.generateUrl('/contactsmenu/contacts');
 			return Promise.resolve($.ajax(url, {
-				method: 'GET'
+				method: 'GET',
+				data: {
+					filter: searchTerm
+				}
 			})).then(function(data) {
 				// Convert to Backbone collection
 				return new ContactCollection(data);
 			});
 		},
 
-		_loadContacts: function() {
+		_loadContacts: function(searchTerm) {
 			var self = this;
 
 			if (!self._contactsPromise) {
-				self._contactsPromise = self._getContats();
+				self._contactsPromise = self._getContacts(searchTerm);
 			}
 
 			self._view.showLoading();
@@ -341,4 +349,4 @@
 
 	OC.ContactsMenu = ContactsMenu;
 
-})(OC, $, Handlebars);
+})(OC, $, _, Handlebars);
