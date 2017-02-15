@@ -149,10 +149,6 @@ class FileSearchBackend implements ISearchBackend {
 		/** @var Folder $folder $results */
 		$results = $folder->search($query);
 
-		var_dump(array_map(function (Node $node) {
-			return $node->getPath();
-		}, $results));
-
 		return array_map(function (Node $node) {
 			if ($node instanceof Folder) {
 				return new SearchResult(new \OCA\DAV\Connector\Sabre\Directory($this->view, $node, $this->tree, $this->shareManager), $this->getHrefForNode($node));
