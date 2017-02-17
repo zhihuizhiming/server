@@ -91,6 +91,7 @@ use OC\Security\TrustedDomainHelper;
 use OC\Session\CryptoWrapper;
 use OC\Tagging\TagMapper;
 use OCA\Theming\ThemingDefaults;
+use OCA\Theming\Util;
 use OCP\Federation\ICloudIdManager;
 use OCP\Authentication\LoginCredentials\IStore;
 use OCP\IL10N;
@@ -727,7 +728,8 @@ class Server extends ServerContainer implements IServerContainer {
 					$c->getURLGenerator(),
 					new \OC_Defaults(),
 					$c->getLazyRootFolder(),
-					$c->getMemCacheFactory()
+					$c->getMemCacheFactory(),
+					new Util($c->getConfig(), $this->getRootFolder(), $this->getAppManager())
 				);
 			}
 			return new \OC_Defaults();
