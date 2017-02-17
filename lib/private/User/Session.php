@@ -50,6 +50,7 @@ use OCP\ISession;
 use OCP\IUser;
 use OCP\IUserManager;
 use OCP\IUserSession;
+use OCP\Lockdown\ILockdownManager;
 use OCP\Security\ISecureRandom;
 use OCP\Session\Exceptions\SessionNotAvailableException;
 use OCP\Util;
@@ -82,7 +83,7 @@ class Session implements IUserSession, Emitter {
 	private $session;
 
 	/** @var ITimeFactory */
-	private $timeFacory;
+	private $timeFactory;
 
 	/** @var IProvider */
 	private $tokenProvider;
@@ -96,26 +97,33 @@ class Session implements IUserSession, Emitter {
 	/** @var ISecureRandom */
 	private $random;
 
+	/** @var ILockdownManager  */
+	private $lockdownManager;
+
 	/**
 	 * @param IUserManager $manager
 	 * @param ISession $session
-	 * @param ITimeFactory $timeFacory
+	 * @param ITimeFactory $timeFactory
 	 * @param IProvider $tokenProvider
 	 * @param IConfig $config
 	 * @param ISecureRandom $random
+	 * @param ILockdownManager $lockdownManager
 	 */
 	public function __construct(IUserManager $manager,
 								ISession $session,
-								ITimeFactory $timeFacory,
+								ITimeFactory $timeFactory,
 								$tokenProvider,
 								IConfig $config,
-								ISecureRandom $random) {
+								ISecureRandom $random,
+								ILockdownManager $lockdownManager
+	) {
 		$this->manager = $manager;
 		$this->session = $session;
-		$this->timeFacory = $timeFacory;
+		$this->timeFactory = $timeFactory;
 		$this->tokenProvider = $tokenProvider;
 		$this->config = $config;
 		$this->random = $random;
+		$this->lockdownManager = $lockdownManager;
 	}
 
 	/**
@@ -372,7 +380,7 @@ class Session implements IUserSession, Emitter {
 		if (!is_null($request->getCookie('cookie_test'))) {
 			return true;
 		}
-		setcookie('cookie_test', 'test', $this->timeFacory->getTime() + 3600);
+		setcookie('cookie_test', 'test', $this->timeFactory->getTime() + 3600);
 		return false;
 	}
 
@@ -462,7 +470,7 @@ class Session implements IUserSession, Emitter {
 					);
 
 					// Set the last-password-confirm session to make the sudo mode work
-					 $this->session->set('last-password-confirm', $this->timeFacory->getTime());
+					 $this->session->set('last-password-confirm', $this->timeFactory->getTime());
 
 					return true;
 				}
@@ -548,7 +556,7 @@ class Session implements IUserSession, Emitter {
 		$this->setUser($user);
 		$this->setLoginName($dbToken->getLoginName());
 		$this->setToken($dbToken->getId());
-		\OC::$server->getLockdownManager()->setToken($dbToken);
+		$this->lockdownManager->setToken($dbToken);
 		$this->manager->emit('\OC\User', 'postLogin', array($user, $password));
 
 		if ($this->isLoggedIn()) {
@@ -624,7 +632,7 @@ class Session implements IUserSession, Emitter {
 		// Check whether login credentials are still valid and the user was not disabled
 		// This check is performed each 5 minutes
 		$lastCheck = $dbToken->getLastCheck() ? : 0;
-		$now = $this->timeFacory->getTime();
+		$now = $this->timeFactory->getTime();
 		if ($lastCheck > ($now - 60 * 5)) {
 			// Checked performed recently, nothing to do now
 			return true;
@@ -745,7 +753,7 @@ class Session implements IUserSession, Emitter {
 		// replace successfully used token with a new one
 		$this->config->deleteUserValue($uid, 'login_token', $currentToken);
 		$newToken = $this->random->generate(32);
-		$this->config->setUserValue($uid, 'login_token', $newToken, $this->timeFacory->getTime());
+		$this->config->setUserValue($uid, 'login_token', $newToken, $this->timeFactory->getTime());
 
 		try {
 			$sessionId = $this->session->getId();
@@ -764,6 +772,7 @@ class Session implements IUserSession, Emitter {
 		$this->setUser($user);
 		$this->setLoginName($token->getLoginName());
 		$this->setToken($token->getId());
+		$this->lockdownManager->setToken($token);
 		$user->updateLastLoginTimestamp();
 		$this->manager->emit('\OC\User', 'postRememberedLogin', [$user]);
 		return true;
@@ -774,7 +783,7 @@ class Session implements IUserSession, Emitter {
 	 */
 	public function createRememberMeToken(IUser $user) {
 		$token = $this->random->generate(32);
-		$this->config->setUserValue($user->getUID(), 'login_token', $token, $this->timeFacory->getTime());
+		$this->config->setUserValue($user->getUID(), 'login_token', $token, $this->timeFactory->getTime());
 		$this->setMagicInCookie($user->getUID(), $token);
 	}
 
@@ -811,7 +820,7 @@ class Session implements IUserSession, Emitter {
 			$webRoot = '/';
 		}
 
-		$expires = $this->timeFacory->getTime() + $this->config->getSystemValue('remember_login_cookie_lifetime', 60 * 60 * 24 * 15);
+		$expires = $this->timeFactory->getTime() + $this->config->getSystemValue('remember_login_cookie_lifetime', 60 * 60 * 24 * 15);
 		setcookie('nc_username', $username, $expires, $webRoot, '', $secureCookie, true);
 		setcookie('nc_token', $token, $expires, $webRoot, '', $secureCookie, true);
 		try {
@@ -831,14 +840,14 @@ class Session implements IUserSession, Emitter {
 		unset($_COOKIE['nc_username']); //TODO: DI
 		unset($_COOKIE['nc_token']);
 		unset($_COOKIE['nc_session_id']);
-		setcookie('nc_username', '', $this->timeFacory->getTime() - 3600, OC::$WEBROOT, '', $secureCookie, true);
-		setcookie('nc_token', '', $this->timeFacory->getTime() - 3600, OC::$WEBROOT, '', $secureCookie, true);
-		setcookie('nc_session_id', '', $this->timeFacory->getTime() - 3600, OC::$WEBROOT, '', $secureCookie, true);
+		setcookie('nc_username', '', $this->timeFactory->getTime() - 3600, OC::$WEBROOT, '', $secureCookie, true);
+		setcookie('nc_token', '', $this->timeFactory->getTime() - 3600, OC::$WEBROOT, '', $secureCookie, true);
+		setcookie('nc_session_id', '', $this->timeFactory->getTime() - 3600, OC::$WEBROOT, '', $secureCookie, true);
 		// old cookies might be stored under /webroot/ instead of /webroot
 		// and Firefox doesn't like it!
-		setcookie('nc_username', '', $this->timeFacory->getTime() - 3600, OC::$WEBROOT . '/', '', $secureCookie, true);
-		setcookie('nc_token', '', $this->timeFacory->getTime() - 3600, OC::$WEBROOT . '/', '', $secureCookie, true);
-		setcookie('nc_session_id', '', $this->timeFacory->getTime() - 3600, OC::$WEBROOT . '/', '', $secureCookie, true);
+		setcookie('nc_username', '', $this->timeFactory->getTime() - 3600, OC::$WEBROOT . '/', '', $secureCookie, true);
+		setcookie('nc_token', '', $this->timeFactory->getTime() - 3600, OC::$WEBROOT . '/', '', $secureCookie, true);
+		setcookie('nc_session_id', '', $this->timeFactory->getTime() - 3600, OC::$WEBROOT . '/', '', $secureCookie, true);
 	}
 
 	/**
