@@ -25,10 +25,10 @@ use Leafo\ScssPhp\Compiler;
 use Leafo\ScssPhp\Exception\ParserException;
 use Leafo\ScssPhp\Formatter\Crunched;
 use Leafo\ScssPhp\Formatter\Expanded;
-use OC\SystemConfig;
 use OCP\Files\IAppData;
 use OCP\Files\NotFoundException;
 use OCP\Files\SimpleFS\ISimpleFolder;
+use OCP\IConfig;
 use OCP\ILogger;
 use OCP\IURLGenerator;
 
@@ -43,20 +43,22 @@ class SCSSCacher {
 	/** @var IURLGenerator */
 	protected $urlGenerator;
 
-	/** @var SystemConfig */
-	protected $systemConfig;
+	/** @var IConfig */
+	protected $config;
 
 	/**
 	 * @param ILogger $logger
 	 * @param IAppData $appData
 	 * @param IURLGenerator $urlGenerator
-	 * @param SystemConfig $systemConfig
+	 * @param IConfig $config
+	 * @param \OC_Defaults $defaults
 	 */
-	public function __construct(ILogger $logger, IAppData $appData, IURLGenerator $urlGenerator, SystemConfig $systemConfig) {
+	public function __construct(ILogger $logger, IAppData $appData, IURLGenerator $urlGenerator, IConfig $config, \OC_Defaults $defaults) {
 		$this->logger = $logger;
 		$this->appData = $appData;
 		$this->urlGenerator = $urlGenerator;
-		$this->systemConfig = $systemConfig;
+		$this->config = $config;
+		$this->defaults = $defaults;
 	}
 
 	/**
@@ -85,7 +87,7 @@ class SCSSCacher {
 			$folder = $this->appData->newFolder($app);
 		}
 
-		if($this->isCached($fileNameCSS, $fileNameSCSS, $folder, $path) && !$this->variablesChanged($fileNameCSS, $folder)) {
+		if(!$this->variablesChanged($fileNameCSS, $folder) && $this->isCached($fileNameCSS, $fileNameSCSS, $folder, $path)) {
 			return true;
 		}
 		return $this->cache($path, $fileNameCSS, $fileNameSCSS, $folder, $webDir);
@@ -119,8 +121,14 @@ class SCSSCacher {
 	 * @return bool
 	 */
 	private function variablesChanged($fileNameCSS, ISimpleFolder $folder) {
-		$variablesFile = \OC::$SERVERROOT . '/core/css/variables.scss';
+		$injectedVariables = $this->getInjectedVariables();
+		if($injectedVariables !== '' && $this->config->getAppValue('core', 'scss.variables') !== md5($injectedVariables)) {
+			$this->resetCache();
+			$this->config->setAppValue('core', 'scss.variables', md5($injectedVariables));
+			return true;
+		}
 		try {
+			$variablesFile = \OC::$SERVERROOT . '/core/css/variables.scss';
 			$cachedFile = $folder->getFile($fileNameCSS);
 			if ($cachedFile->getMTime() < filemtime($variablesFile)
 				|| $cachedFile->getSize() === 0
@@ -130,6 +138,7 @@ class SCSSCacher {
 		} catch (NotFoundException $e) {
 			return true;
 		}
+
 		return false;
 	}
 
@@ -148,7 +157,7 @@ class SCSSCacher {
 			$path,
 			\OC::$SERVERROOT . '/core/css/',
 		]);
-		if($this->systemConfig->getValue('debug')) {
+		if($this->config->getSystemValue('debug')) {
 			// Debug mode
 			$scss->setFormatter(Expanded::class);
 			$scss->setLineNumberStyle(Compiler::LINE_COMMENTS);
@@ -167,6 +176,7 @@ class SCSSCacher {
 		try {
 			$compiledScss = $scss->compile(
 				'@import "variables.scss";' .
+				$this->getInjectedVariables() .
 				'@import "'.$fileNameSCSS.'";');
 		} catch(ParserException $e) {
 			$this->logger->error($e, ['app' => 'core']);
@@ -183,6 +193,29 @@ class SCSSCacher {
 	}
 
 	/**
+	 * Reset scss cache by deleting all generated css files
+	 * We need to regenerate all files when variables change
+	 */
+	public function resetCache() {
+		foreach ($this->appData->getDirectoryListing() as $folder) {
+			foreach ($folder->getDirectoryListing() as $file) {
+				$file->delete();
+			}
+		}
+	}
+
+	/**
+	 * @return string SCSS code for variables from OC_Defaults
+	 */
+	public function getInjectedVariables() {
+		$variables = '';
+		foreach ($this->defaults->getThemingVariables() as $key => $value) {
+			$variables .= '$' . $key . ': ' . $value . ';';
+		}
+		return $variables;
+	}
+
+	/**
 	 * Add the correct uri prefix to make uri valid again
 	 * @param string $css
 	 * @param string $webDir
@@ -191,7 +224,7 @@ class SCSSCacher {
 	private function rebaseUrls($css, $webDir) {
 		$re = '/url\([\'"]([\.\w?=\/-]*)[\'"]\)/x';
 		// OC\Route\Router:75
-		if(($this->systemConfig->getValue('htaccess.IgnoreFrontController', false) === true || getenv('front_controller_active') === 'true')) {
+		if(($this->config->getSystemValue('htaccess.IgnoreFrontController', false) === true || getenv('front_controller_active') === 'true')) {
 			$subst = 'url(\'../../'.$webDir.'/$1\')';	
 		} else {
 			$subst = 'url(\'../../../'.$webDir.'/$1\')';
