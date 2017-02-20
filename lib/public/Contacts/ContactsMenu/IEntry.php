@@ -32,16 +32,19 @@ use JsonSerializable;
 interface IEntry extends JsonSerializable {
 
 	/**
+	 * @since 12.0
 	 * @return string
 	 */
 	public function getFullName();
 
 	/**
+	 * @since 12.0
 	 * @return string[]
 	 */
 	public function getEMailAddresses();
 
 	/**
+	 * @since 12.0
 	 * @param IAction $action an action to show in the contacts menu
 	 */
 	public function addAction(IAction $action);
@@ -49,6 +52,7 @@ interface IEntry extends JsonSerializable {
 	/**
 	 * Get an arbitrary property from the contact
 	 *
+	 * @since 12.0
 	 * @param string $key
 	 * @return mixed the value of the property or null
 	 */

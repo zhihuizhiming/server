@@ -30,6 +30,7 @@ namespace OCP\Contacts\ContactsMenu;
 interface IProvider {
 
 	/**
+	 * @since 12.0
 	 * @param IEntry $entry
 	 */
 	public function process(IEntry $entry);
