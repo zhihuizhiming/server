@@ -64,7 +64,7 @@ class ActionProviderStore {
 					'message' => "Could not load contacts menu action provider $class",
 					'app' => 'core',
 				]);
-				throw new \Exception("Could not load contacts menu action provider $class");
+				throw new \Exception("Could not load contacts menu action provider");
 			}
 		}
 
