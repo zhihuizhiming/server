@@ -83,6 +83,13 @@ class LinkAction implements ILinkAction {
 	}
 
 	/**
+	 * @return string
+	 */
+	public function getHref() {
+		return $this->href;
+	}
+
+	/**
 	 * @return array
 	 */
 	public function jsonSerialize() {

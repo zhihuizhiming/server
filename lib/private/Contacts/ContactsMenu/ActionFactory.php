@@ -26,6 +26,7 @@ namespace OC\Contacts\ContactsMenu;
 
 use OC\Contacts\ContactsMenu\Actions\LinkAction;
 use OCP\Contacts\ContactsMenu\IActionFactory;
+use OCP\Contacts\ContactsMenu\ILinkAction;
 
 class ActionFactory implements IActionFactory {
 
@@ -33,7 +34,7 @@ class ActionFactory implements IActionFactory {
 	 * @param string $icon
 	 * @param string $name
 	 * @param string $href
-	 * @return LinkAction
+	 * @return ILinkAction
 	 */
 	public function newLinkAction($icon, $name, $href) {
 		$action = new LinkAction();
@@ -47,7 +48,7 @@ class ActionFactory implements IActionFactory {
 	 * @param string $icon
 	 * @param string $name
 	 * @param string $email
-	 * @return LinkAction
+	 * @return ILinkAction
 	 */
 	public function newEMailAction($icon, $name, $email) {
 		return $this->newLinkAction($icon, $name, 'mailto:' . urlencode($email));

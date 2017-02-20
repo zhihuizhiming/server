@@ -106,24 +106,6 @@ class Entry implements IEntry {
 	}
 
 	/**
-	 * @return array
-	 */
-	public function jsonSerialize() {
-		$topAction = (count($this->actions) > 0) ? reset($this->actions)->jsonSerialize() : null;
-		$otherActions = array_map(function(IAction $action) {
-			return $action->jsonSerialize();
-		}, array_slice($this->actions, 1));
-
-		return [
-			'id' => $this->id,
-			'fullName' => $this->fullName,
-			'topAction' => $topAction,
-			'actions' => $otherActions,
-			'lastMessage' => '',
-		];
-	}
-
-	/**
 	 * @param array $contact key-value array containing additional properties
 	 */
 	public function setProperties(array $contact) {
@@ -139,6 +121,24 @@ class Entry implements IEntry {
 			return null;
 		}
 		return $this->properties[$key];
+	}
+
+	/**
+	 * @return array
+	 */
+	public function jsonSerialize() {
+		$topAction = !empty($this->actions) ? $this->actions[0]->jsonSerialize() : null;
+		$otherActions = array_map(function(IAction $action) {
+			return $action->jsonSerialize();
+		}, array_slice($this->actions, 1));
+
+		return [
+			'id' => $this->id,
+			'fullName' => $this->fullName,
+			'topAction' => $topAction,
+			'actions' => $otherActions,
+			'lastMessage' => '',
+		];
 	}
 
 }

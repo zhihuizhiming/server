@@ -33,4 +33,9 @@ interface ILinkAction extends IAction {
 	 * @param string $href the target URL of the action
 	 */
 	public function setHref($href);
+
+	/**
+	 * @return string
+	 */
+	public function getHref();
 }

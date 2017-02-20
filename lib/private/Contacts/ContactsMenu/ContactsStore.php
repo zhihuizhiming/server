@@ -30,13 +30,13 @@ use OCP\Contacts\IManager;
 class ContactsStore {
 
 	/** @var IManager */
-	private $manager;
+	private $contactsManager;
 
 	/**
-	 * @param IManager $manager
+	 * @param IManager $contactsManager
 	 */
-	public function __construct(IManager $manager) {
-		$this->manager = $manager;
+	public function __construct(IManager $contactsManager) {
+		$this->contactsManager = $contactsManager;
 	}
 
 	/**
@@ -44,7 +44,7 @@ class ContactsStore {
 	 * @return IEntry[]
 	 */
 	public function getContacts($filter) {
-		$allContacts = $this->manager->search($filter ?: '', [
+		$allContacts = $this->contactsManager->search($filter ?: '', [
 			'FN',
 		]);
 
