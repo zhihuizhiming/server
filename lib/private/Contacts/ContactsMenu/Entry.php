@@ -88,6 +88,13 @@ class Entry implements IEntry {
 	}
 
 	/**
+	 * @return IAction[]
+	 */
+	public function getActions() {
+		return $this->actions;
+	}
+
+	/**
 	 * sort the actions by priority and name
 	 */
 	private function sortActions() {

@@ -24,11 +24,12 @@
 
 namespace Tests\Contacts\ContactsMenu;
 
+use OC\Contacts\ContactsMenu\Actions\LinkAction;
 use OC\Contacts\ContactsMenu\Entry;
 use OCP\Contacts\ContactsMenu\IAction;
 use Test\TestCase;
 
-class EntryTest extends TestCase {
+class EntryTest extends \PHPUnit_Framework_TestCase {
 
 	/** @var Entry */
 	private $entry;
@@ -58,64 +59,26 @@ class EntryTest extends TestCase {
 
 	public function testAddAndSortAction() {
 		// Three actions, two with equal priority
-		$action1 = $this->createMock(IAction::class);
-		$action2 = $this->createMock(IAction::class);
-		$action3 = $this->createMock(IAction::class);
-		$action1->expects($this->any())
-			->method('getPriority')
-			->willReturn(10);
-		$action1->expects($this->any())
-			->method('getName')
-			->willReturn('Bravo');
-		$action1->expects($this->once())
-			->method('jsonSerialize')
-			->willReturn(['id' => 1]);
+		$action1 = new LinkAction();
+		$action2 = new LinkAction();
+		$action3 = new LinkAction();
+		$action1->setPriority(10);
+		$action1->setName('Bravo');
 
-		$action2->expects($this->any())
-			->method('getPriority')
-			->willReturn(0);
-		$action2->expects($this->any())
-			->method('getName')
-			->willReturn('Batman');
-		$action2->expects($this->once())
-			->method('jsonSerialize')
-			->willReturn(['id' => 2]);
+		$action2->setPriority(0);
+		$action2->setName('Batman');
 
-		$action3->expects($this->any())
-			->method('getPriority')
-			->willReturn(10);
-		$action3->expects($this->any())
-			->method('getName')
-			->willReturn('Alfa');
-		$action3->expects($this->once())
-			->method('jsonSerialize')
-			->willReturn(['id' => 3]);
+		$action3->setPriority(10);
+		$action3->setName('Alfa');
 
-		$expectedJson = [
-			'id' => null,
-			'fullName' => '',
-			'topAction' => [
-				'id' => 3,
-			],
-			'actions' => [
-				[
-					'id' => 1,
-				],
-				[
-					'id' => 2
-				],
-			],
-			'lastMessage' => '',
-		];
 		$this->entry->addAction($action1);
-		$action1->x = 1;
 		$this->entry->addAction($action2);
-		$action2->x = 2;
 		$this->entry->addAction($action3);
-		$action3->x = 3;
-		$json = $this->entry->jsonSerialize();
+		$sorted = $this->entry->getActions();
 
-		$this->assertEquals($expectedJson, $json);
+		$this->assertSame($action3, $sorted[0]);
+		$this->assertSame($action1, $sorted[1]);
+		$this->assertSame($action2, $sorted[2]);
 	}
 
 	public function testSetGetProperties() {
