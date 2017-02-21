@@ -75,7 +75,7 @@
 					<div id="contactsmenu-trigger"
 						 class="icon-contacts-dark"></div>
 						<div id="contactsmenu-menu"
-							 class="popovermenu bubble menu">
+							 class="popovermenu">
 						</div>
 				</div>
 				<div id="settings">

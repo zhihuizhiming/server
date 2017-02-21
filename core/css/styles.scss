@@ -1098,9 +1098,11 @@ span.ui-icon {
 }
 
 #contactsmenu-menu {
-	top: 38px;
+	top: 35px;
 	right: -16px;
 	width: 350px;
+	border-top-left-radius: 0px;
+	border-top-right-radius: 0px;
 
 	div.emptycontent {
 		margin-top: 25vh;
@@ -1169,7 +1171,7 @@ span.ui-icon {
 		}
 
 		/* actions menu */
-		.menu {
+		.popovermenu {
 			right: 3px;
 			top: 53px;
 		}

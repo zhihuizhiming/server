@@ -50,10 +50,15 @@
 			+ '<a class="top-action {{contact.topAction.icon}}" href="{{contact.topAction.hyperlink}}"></a>'
 			+ '{{#if contact.actions.length}}'
 			+ '    <span class="other-actions icon-more"></span>'
-			+ '    <div class="popovermenu bubble menu">'
+			+ '    <div class="popovermenu">'
 			+ '        <ul>'
 			+ '            {{#each contact.actions}}'
-			+ '            <li><span class="{{icon}}"><a href="{{hyperlink}}">{{title}}</a></span></li>'
+			+ '            <li>'
+			+ '                <a href="{{hyperlink}}">'
+			+ '                    <span class="{{icon}}"></span>'
+			+ '                    <span>{{title}}</span>'
+			+ '                </a>'
+			+ '            </li>'
 			+ '            {{/each}}'
 			+ '        </ul>'
 			+ '    </div>'
@@ -164,7 +169,7 @@
 		},
 
 		_onToggleActionsMenu: function() {
-			this.$('.menu').toggleClass('open');
+			this.$('.popovermenu').toggleClass('open');
 		}
 	});
 
