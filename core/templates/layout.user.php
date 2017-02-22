@@ -73,7 +73,7 @@
 				</form>
 				<div style="position: relative">
 					<div id="contactsmenu-trigger"
-						 class="icon-contacts-dark"></div>
+						 class="icon-contacts"></div>
 						<div id="contactsmenu-menu"
 							 class="popovermenu">
 						</div>
