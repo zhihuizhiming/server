@@ -71,7 +71,7 @@
 						autocomplete="off" tabindex="5">
 					<button class="icon-close-white" type="reset"></button>
 				</form>
-				<div style="position: relative">
+				<div>
 					<div id="contactsmenu-trigger"
 						 class="icon-contacts"></div>
 						<div id="contactsmenu-menu"

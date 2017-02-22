@@ -24,9 +24,8 @@
 
 /* Header menu */
 .menu {
-	position: fixed;
+	position: absolute;
 	top: 45px;
-	max-height: 85%;
 	background-color: #fff;
 	box-shadow: 0 1px 10px rgba(150, 150, 150, 0.75);
 	border-radius: 0 0 3px 3px;
@@ -211,6 +210,7 @@
 	width: 265px;
 	max-height: 85%;
 	padding-bottom: 10px;
+	position: fixed;
 	&:after {
 		/* position of dropdown arrow */
 		left: 47%;
