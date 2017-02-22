@@ -1099,11 +1099,12 @@ span.ui-icon {
 }
 
 #contactsmenu-menu {
-	top: 35px;
-	right: -16px;
+	right: 70px;
 	width: 350px;
-	border-top-left-radius: 0px;
-	border-top-right-radius: 0px;
+
+	&::after {
+		right: 22px;
+	}
 
 	div.emptycontent {
 		margin-top: 25vh;
