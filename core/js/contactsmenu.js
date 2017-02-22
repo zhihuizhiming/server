@@ -359,10 +359,10 @@
 		_toggleVisibility: function() {
 			if (!this._open) {
 				this._loadContacts();
-				this.$el.addClass('open');
+				this.$el.show();
 				this._open = true;
 			} else {
-				this.$el.removeClass('open');
+				this.$el.hide();
 				this._open = false;
 			}
 		},
